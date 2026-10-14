@@ -1,0 +1,239 @@
+[
+  {
+    "areaId": "fiscal",
+    "rootId": "19eincFNoNqrJajk3ez8Pn-_-8mBg0fZ8",
+    "folders": [
+      {
+        "folderId": "19eincFNoNqrJajk3ez8Pn-_-8mBg0fZ8",
+        "path": "Fiscal",
+        "file": "19eincFNoNqrJajk3ez8Pn-_-8mBg0fZ8.html"
+      }
+    ],
+    "ignoredFolders": [
+      {
+        "folderId": "1m_oGpBsukH1ZT8tnfNeIO0GdcMp3_jho",
+        "name": "Fora do contexto REVISAR ou REGRAVAR - Fiscal",
+        "path": "Fiscal / Fora do contexto REVISAR ou REGRAVAR - Fiscal"
+      }
+    ]
+  },
+  {
+    "areaId": "estoque",
+    "rootId": "1Is02Ons_d8KJ4n_C7E48zHLUgoIu8jhp",
+    "folders": [
+      {
+        "folderId": "1Is02Ons_d8KJ4n_C7E48zHLUgoIu8jhp",
+        "path": "Estoque",
+        "file": "1Is02Ons_d8KJ4n_C7E48zHLUgoIu8jhp.html"
+      },
+      {
+        "folderId": "1fLsFlCUlwj_17ngFKVkpR7CdOGs1ARKg",
+        "path": "Estoque / Modelos de O.S Padrão",
+        "file": "1fLsFlCUlwj_17ngFKVkpR7CdOGs1ARKg.html"
+      },
+      {
+        "folderId": "18lxE2XUSf0HHyhKyj71dVKxlD4WxLyYW",
+        "path": "Estoque / Relatórios Query Biulder",
+        "file": "18lxE2XUSf0HHyhKyj71dVKxlD4WxLyYW.html"
+      }
+    ],
+    "ignoredFolders": [
+      {
+        "folderId": "1_zA8oxFSioUJ5iBs8FEqgXdDgFMp8ExW",
+        "name": "Fora do contexto REVISAR ou REGRAVAR - O.S",
+        "path": "Estoque / Fora do contexto REVISAR ou REGRAVAR - O.S"
+      }
+    ]
+  },
+  {
+    "areaId": "financeiro",
+    "rootId": "1PPy8Ny8J1WQbziEbVLF9JhZBUP1pTEDC",
+    "folders": [
+      {
+        "folderId": "1PPy8Ny8J1WQbziEbVLF9JhZBUP1pTEDC",
+        "path": "Financeiro",
+        "file": "1PPy8Ny8J1WQbziEbVLF9JhZBUP1pTEDC.html"
+      },
+      {
+        "folderId": "1UZaBjx3-_JlaH4uwGiN_pcey5uNMeokj",
+        "path": "Financeiro / Agrupamento de Faturas",
+        "file": "1UZaBjx3-_JlaH4uwGiN_pcey5uNMeokj.html"
+      },
+      {
+        "folderId": "14a6-aMMR7ze3PdghJF3qmdLFOrXNfUX0",
+        "path": "Financeiro / Biblioteca de vídeos do Cadu",
+        "file": "14a6-aMMR7ze3PdghJF3qmdLFOrXNfUX0.html"
+      },
+      {
+        "folderId": "1b40_Yhbp1v5lKzxlhWtKo4TYQd0_LR_q",
+        "path": "Financeiro / Carteira de Cobrança",
+        "file": "1b40_Yhbp1v5lKzxlhWtKo4TYQd0_LR_q.html"
+      },
+      {
+        "folderId": "1GwRUTVkoIVjJITHGRZxtOUUMuiQH390j",
+        "path": "Financeiro / Cliente",
+        "file": "1GwRUTVkoIVjJITHGRZxtOUUMuiQH390j.html"
+      },
+      {
+        "folderId": "10OMwJC0wsF7X8ry76PxHJueCB0Io83Md",
+        "path": "Financeiro / Conciliação Bancária",
+        "file": "10OMwJC0wsF7X8ry76PxHJueCB0Io83Md.html"
+      },
+      {
+        "folderId": "1uhQOboV1FoxVN3lDwgJhF9MqO0DlAz3C",
+        "path": "Financeiro / Contas a pagar",
+        "file": "1uhQOboV1FoxVN3lDwgJhF9MqO0DlAz3C.html"
+      },
+      {
+        "folderId": "1psaqNGgKLcEt17TtnetM5YeZdpYYZPId",
+        "path": "Financeiro / Contas a receber",
+        "file": "1psaqNGgKLcEt17TtnetM5YeZdpYYZPId.html"
+      },
+      {
+        "folderId": "1XGAO6zAHm89SjydOFn5VucEI4msZIoYg",
+        "path": "Financeiro / Contratos",
+        "file": "1XGAO6zAHm89SjydOFn5VucEI4msZIoYg.html"
+      },
+      {
+        "folderId": "1FVyYp_rAwAuatjwxXoo5IEOkoSJHEo9D",
+        "path": "Financeiro / Geração de financeiro",
+        "file": "1FVyYp_rAwAuatjwxXoo5IEOkoSJHEo9D.html"
+      },
+      {
+        "folderId": "1iy91Si7XGnN4tUSk4_PzoKAnx2ljVlV8",
+        "path": "Financeiro / Modelos e Termos de Contrato",
+        "file": "1iy91Si7XGnN4tUSk4_PzoKAnx2ljVlV8.html"
+      },
+      {
+        "folderId": "1HSN7yiTnQoF0VLus6AXPlYt-p3bWeNBT",
+        "path": "Financeiro / Pago até",
+        "file": "1HSN7yiTnQoF0VLus6AXPlYt-p3bWeNBT.html"
+      },
+      {
+        "folderId": "1RJeiZxjZfrYZkh1yYNX8osKR_6nXKk-p",
+        "path": "Financeiro / Permissões",
+        "file": "1RJeiZxjZfrYZkh1yYNX8osKR_6nXKk-p.html"
+      },
+      {
+        "folderId": "1drjCDjnV1TTgkPrcL-bUaVnmsvMpB5xA",
+        "path": "Financeiro / Query Builder",
+        "file": "1drjCDjnV1TTgkPrcL-bUaVnmsvMpB5xA.html"
+      },
+      {
+        "folderId": "1OgXiY9WbWGCH5nYCeN4Si7YYaHmTuR0L",
+        "path": "Financeiro / Relatórios",
+        "file": "1OgXiY9WbWGCH5nYCeN4Si7YYaHmTuR0L.html"
+      },
+      {
+        "folderId": "1LSjIBgpt4Sogd98N6hMBCz2gZ_P59oRL",
+        "path": "Financeiro / Remessa e Retorno",
+        "file": "1LSjIBgpt4Sogd98N6hMBCz2gZ_P59oRL.html"
+      },
+      {
+        "folderId": "1chSaKU0dD6jazwK--vs0ZynrMF9QHG01",
+        "path": "Financeiro / Renegociação",
+        "file": "1chSaKU0dD6jazwK--vs0ZynrMF9QHG01.html"
+      },
+      {
+        "folderId": "1SPpNUAVCgShm-feQH4LgoL7MQRmiKWx4",
+        "path": "Financeiro / Rotinas e Tarefas",
+        "file": "1SPpNUAVCgShm-feQH4LgoL7MQRmiKWx4.html"
+      },
+      {
+        "folderId": "1Ke-eppNloxu4zixZwJQ50lldjoGqAMB0",
+        "path": "Financeiro / Biblioteca de vídeos do Cadu / Ajuste de Data Pago Até",
+        "file": "1Ke-eppNloxu4zixZwJQ50lldjoGqAMB0.html"
+      },
+      {
+        "folderId": "1lioYfqFf-zXXsK-oAgLkFcOCK2B9Kp9f",
+        "path": "Financeiro / Biblioteca de vídeos do Cadu / Alteração Wizard",
+        "file": "1lioYfqFf-zXXsK-oAgLkFcOCK2B9Kp9f.html"
+      },
+      {
+        "folderId": "1JM4rD-EtjUrD4g0LrgyCqnaW_xoQK1Z_",
+        "path": "Financeiro / Biblioteca de vídeos do Cadu / Cancelamento de boletos em massa",
+        "file": "1JM4rD-EtjUrD4g0LrgyCqnaW_xoQK1Z_.html"
+      },
+      {
+        "folderId": "1WkWDJellV9zswb1Moep4dd6ZbAWzpj-d",
+        "path": "Financeiro / Biblioteca de vídeos do Cadu / Conciliação Bancária",
+        "file": "1WkWDJellV9zswb1Moep4dd6ZbAWzpj-d.html"
+      },
+      {
+        "folderId": "1dTaqMSsGOzhS_g1SLulb4S_-B_EzH_sN",
+        "path": "Financeiro / Biblioteca de vídeos do Cadu / Condição de Pagamento",
+        "file": "1dTaqMSsGOzhS_g1SLulb4S_-B_EzH_sN.html"
+      },
+      {
+        "folderId": "1OojfiTtW7V_C__zKIkg5oGZ6Cp_VoUWf",
+        "path": "Financeiro / Biblioteca de vídeos do Cadu / Contas a Pagar (Fazendo)",
+        "file": "1OojfiTtW7V_C__zKIkg5oGZ6Cp_VoUWf.html"
+      },
+      {
+        "folderId": "1qUaP99xfBau9nD4BhVoH0kZ8Yw0-hbs-",
+        "path": "Financeiro / Biblioteca de vídeos do Cadu / Homologação de Carteira de Cobrança",
+        "file": "1qUaP99xfBau9nD4BhVoH0kZ8Yw0-hbs-.html"
+      },
+      {
+        "folderId": "11ye9JCHF_oojuE9OWvS40pD-UFuJRxok",
+        "path": "Financeiro / Biblioteca de vídeos do Cadu / Impressão de boletos",
+        "file": "11ye9JCHF_oojuE9OWvS40pD-UFuJRxok.html"
+      },
+      {
+        "folderId": "1x4VZOcRoqhi7_9rOMxv5qwP6JWwXld8h",
+        "path": "Financeiro / Biblioteca de vídeos do Cadu / Localização de Pagamentos com Divergências",
+        "file": "1x4VZOcRoqhi7_9rOMxv5qwP6JWwXld8h.html"
+      },
+      {
+        "folderId": "1L7w9WbacwM-7wEy-_1jeFVnrWwKf44Cn",
+        "path": "Financeiro / Biblioteca de vídeos do Cadu / Modelo de contrato e termo",
+        "file": "1L7w9WbacwM-7wEy-_1jeFVnrWwKf44Cn.html"
+      },
+      {
+        "folderId": "1AsGHhcPZIJS3AFRjF20cfrlllZAm8eme",
+        "path": "Financeiro / Biblioteca de vídeos do Cadu / Plano de Venda",
+        "file": "1AsGHhcPZIJS3AFRjF20cfrlllZAm8eme.html"
+      },
+      {
+        "folderId": "15JvnfCFlRIxtnlgj1B8unyLzCTD4tTam",
+        "path": "Financeiro / Biblioteca de vídeos do Cadu / Query Builder - Conceito Geral",
+        "file": "15JvnfCFlRIxtnlgj1B8unyLzCTD4tTam.html"
+      },
+      {
+        "folderId": "1smBg4dMKfiOCRU97jsje2ySVzO55lJN5",
+        "path": "Financeiro / Biblioteca de vídeos do Cadu / Relatório de contratos",
+        "file": "1smBg4dMKfiOCRU97jsje2ySVzO55lJN5.html"
+      },
+      {
+        "folderId": "14mHgoxU6b84Bz5idBX3uZRS7bSrKS9nG",
+        "path": "Financeiro / Biblioteca de vídeos do Cadu / Renegociação de Boletos",
+        "file": "14mHgoxU6b84Bz5idBX3uZRS7bSrKS9nG.html"
+      },
+      {
+        "folderId": "1PNppshytvd-qH7rFuBatqh4YoLHTLF6J",
+        "path": "Financeiro / Biblioteca de vídeos do Cadu / Modelo de contrato e termo / Etiqueta Anatel",
+        "file": "1PNppshytvd-qH7rFuBatqh4YoLHTLF6J.html"
+      }
+    ],
+    "ignoredFolders": []
+  },
+  {
+    "areaId": "integracoes",
+    "rootId": "1XPkYMIMtJJm1B0Wp2PMLwx5Wa_vYZ_LK",
+    "folders": [
+      {
+        "folderId": "1XPkYMIMtJJm1B0Wp2PMLwx5Wa_vYZ_LK",
+        "path": "Integrações Gerais",
+        "file": "1XPkYMIMtJJm1B0Wp2PMLwx5Wa_vYZ_LK.html"
+      }
+    ],
+    "ignoredFolders": [
+      {
+        "folderId": "1HLy-vYlwdyMbcC1heNmGrZGC6DYiCntq",
+        "name": "Fora do contexto Helper Mídia - Integrações e API",
+        "url": "https://drive.google.com/drive/folders/1HLy-vYlwdyMbcC1heNmGrZGC6DYiCntq",
+        "path": "Integrações Gerais / Fora do contexto Helper Mídia - Integrações e API"
+      }
+    ]
+  }
+]

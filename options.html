@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Speed Vídeos — Opções</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main>
+    <header><p class="eyebrow">EXTENSÃO PARA OPA!</p><h1>Speed Vídeos</h1><p>Encontre o passo a passo e acrescente o link ao rascunho do atendimento.</p></header>
+    <section aria-labelledby="opa-heading">
+      <h2 id="opa-heading">Integração com o Opa!</h2>
+      <p>O endereço já está definido: <a id="opa-address" href="https://suporte.ixcsoft.com.br" target="_blank" rel="noopener noreferrer">https://suporte.ixcsoft.com.br</a>.</p>
+      <p>O botão <strong>Vídeos</strong> aparece junto ao campo de mensagem ao abrir um atendimento.</p>
+      <form id="opa-form">
+        <div class="actions"><button id="save" type="submit">Ativar no Opa!</button><button id="disable" class="secondary" type="button">Desativar no Opa!</button></div>
+      </form>
+      <p id="opa-status" role="status"></p>
+    </section>
+    <section aria-labelledby="message-heading">
+      <h2 id="message-heading">Mensagem ao inserir o vídeo</h2>
+      <form id="message-form">
+        <label for="message-introduction">Sua mensagem</label>
+        <textarea id="message-introduction" rows="4" maxlength="2000" placeholder="Segue o vídeo com o passo a passo:"></textarea>
+        <p class="note">A mensagem vale para todos os setores e fica salva neste navegador. O assunto, o nome e o link são acrescentados abaixo. Deixe vazio para inserir apenas o título e o link.</p>
+        <p class="preview-label">Prévia</p>
+        <pre id="message-preview" aria-label="Prévia da mensagem"></pre>
+        <div class="actions"><button id="save-message" type="submit">Salvar mensagem</button><button id="reset-message" class="secondary" type="button">Restaurar padrão</button></div>
+      </form>
+      <p id="message-status" role="status"></p>
+    </section>
+    <section aria-labelledby="catalog-heading">
+      <h2 id="catalog-heading">Catálogo de vídeos</h2>
+      <label for="catalog-area">Setor ou pasta pessoal para atualizar</label>
+      <select id="catalog-area"></select>
+      <p id="catalog-info">Carregando o catálogo…</p>
+      <p>Pasta de origem: <a id="folder-link" target="_blank" rel="noopener noreferrer"></a>. A pesquisa funciona localmente no catálogo do setor selecionado.</p>
+      <button id="update" type="button">Atualizar vídeos da pasta</button>
+      <p id="update-status" role="status"></p>
+      <p class="note">A atualização é manual e percorre a pasta pública e suas subpastas. Pastas com “fora de contexto”, “fora do contexto” ou “regravar” no nome são ignoradas, incluindo todo o seu conteúdo. Se uma pasta necessária falhar, o catálogo anterior desse setor será mantido.</p>
+      <p class="note">No menu de vídeos, o botão <strong>Atualizar</strong> consulta todos os setores e suas pastas pessoais. Para adicionar ou remover uma pasta pública do Drive, abra <strong>Pastas pessoais</strong> no menu. Elas ficam salvas somente neste perfil do navegador.</p>
+    </section>
+    <section aria-labelledby="use-heading">
+      <h2 id="use-heading">Durante o atendimento</h2>
+      <ol><li>Abra um atendimento e clique em <strong>Vídeos</strong>.</li><li>Escolha um setor ou pasta pessoal no seletor <strong>Catálogo</strong>.</li><li>Pesquise por uma ou mais palavras e escolha <strong>Inserir no chat</strong>.</li><li>Revise a mensagem e envie pelo Opa! quando estiver pronta.</li></ol>
+      <p class="note">Você também pode abrir o catálogo pelo ícone da extensão, copiar o link ou abrir o vídeo.</p>
+    </section>
+    <footer>Versão 0.8.3 — <a id="repository-link" href="https://github.com/a-v99/opa_speed_videos" target="_blank" rel="noopener noreferrer">GitHub</a></footer>
+  </main>
+  <script src="core.js"></script>
+  <script src="view.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

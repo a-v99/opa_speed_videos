@@ -1,0 +1,20 @@
+{
+  "name": "opa-speed-videos",
+  "version": "0.8.3",
+  "private": true,
+  "description": "Extensão para pesquisar vídeos de suporte e inserir links no rascunho do Opa! Suite.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/a-v99/opa_speed_videos.git"
+  },
+  "homepage": "https://github.com/a-v99/opa_speed_videos",
+  "bugs": { "url": "https://github.com/a-v99/opa_speed_videos/issues" },
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "check": "node scripts/check.cjs",
+    "test": "node --test tests/verify.cjs",
+    "package": "python3 scripts/package.py"
+  },
+  "devDependencies": { "jsdom": "26.1.0" }
+}

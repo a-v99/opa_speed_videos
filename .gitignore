@@ -1,0 +1,23 @@
+# Dependências e saídas locais
+node_modules/
+dist/
+coverage/
+*.log
+__pycache__/
+*.pyc
+
+# Credenciais e configurações locais
+.env
+.env.*
+!.env.example
+.npmrc
+*.pem
+*.key
+*.pfx
+*.p12
+
+# Arquivos do sistema e do editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
