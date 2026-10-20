@@ -4,10 +4,11 @@
   background: var(--sv-bg); color: var(--sv-ink); font: 14px/1.5 Arial,sans-serif;
   display: flex; flex-direction: column; height: 100%; min-height: 0; border-radius: 14px; overflow: hidden; }
 @media (prefers-color-scheme: dark) { .sv-app { --sv-bg: #101923; --sv-card: #192534; --sv-ink: #edf3fa; --sv-muted: #a6b5c7; --sv-line: #304154; --sv-accent: #79abff; } }
-.sv-header { padding: 16px 18px 12px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; border-bottom: 1px solid var(--sv-line); }
+.sv-header { padding: 16px 18px 12px; display: grid; gap: 10px; border-bottom: 1px solid var(--sv-line); }
 .sv-title { margin: 0; font-size: 19px; font-weight: 700; letter-spacing: -.4px; }
 .sv-subtitle { color: var(--sv-muted); font-size: 12px; margin-top: 3px; }
-.sv-header-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.sv-header-actions { display: flex; gap: 7px; align-items: center; min-width: 0; }
+.sv-header-actions .sv-btn { flex-shrink: 0; white-space: nowrap; }
 .sv-refresh { white-space: nowrap; }
 .sv-personal { border-bottom: 1px solid var(--sv-line); flex-shrink: 0; }
 .sv-personal summary { padding: 8px 18px; color: var(--sv-accent); font-size: 12px; cursor: pointer; }
@@ -27,9 +28,10 @@
 .sv-personal-count { display: block; font-size: 11px; color: var(--sv-muted); }
 .sv-remove-folder { flex-shrink: 0; }
 .sv-controls { padding: 14px 18px 10px; display: grid; gap: 9px; }
-.sv-sector { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 10px; color: var(--sv-muted); font-size: 12px; }
+.sv-sector { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 6px; color: var(--sv-muted); font-size: 11px; min-width: 0; flex: 1; }
 .sv-sector-select:disabled { opacity: .55; cursor: wait; }
 .sv-app input[type=search], .sv-app select { width: 100%; background: var(--sv-card); color: var(--sv-ink); border: 1px solid var(--sv-line); border-radius: 8px; padding: 10px 12px; font: inherit; }
+.sv-header-actions .sv-sector-select { min-width: 0; height: 32px; padding: 5px 7px; font: 12px Arial,sans-serif; text-overflow: ellipsis; }
 .sv-app input[type=search]:focus, .sv-app select:focus { outline: 2px solid var(--sv-accent); outline-offset: 1px; }
 .sv-filters { display: flex; align-items: center; gap: 10px; }
 .sv-check { display: flex; gap: 6px; align-items: center; color: var(--sv-muted); font-size: 12px; cursor: pointer; }

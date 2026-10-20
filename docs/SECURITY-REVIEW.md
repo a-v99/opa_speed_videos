@@ -1,6 +1,6 @@
 # Revisão de segurança — Opa! Speed Vídeos
 
-Este documento descreve o código da versão **0.8.3** para facilitar a revisão da extensão. Não representa homologação ou aprovação da IXCSoft.
+Este documento descreve o código da versão **0.8.6** para facilitar a revisão da extensão. Não representa homologação ou aprovação da IXCSoft.
 
 ## Escopo
 
@@ -44,6 +44,7 @@ O link do GitHub não exige permissão adicional: é um link comum em `options.h
 | Pastas pessoais | Link e nome informados pelo usuário; catálogo salvo neste perfil. Remover retira os dados locais e não altera o Drive. |
 | Favoritos e área selecionada | Identificadores salvos em `chrome.storage.local`. |
 | Mensagem personalizada | Texto informado nas opções, salvo localmente e usado para compor o rascunho. |
+| Títulos individuais | Mapa `videoTitles` em `chrome.storage.local`, por ID do vídeo. Tem prioridade na apresentação, busca e composição da mensagem, sem alterar arquivos do Drive. |
 | Rascunho do atendimento | O adaptador lê o campo `#input_envio_msg` para acrescentar o texto no final e preservar o conteúdo existente. |
 | Aba ativa | Usada para localizar um atendimento na origem permitida ao inserir pelo popup. |
 
@@ -59,7 +60,7 @@ https://drive.google.com/embeddedfolderview?id=ID_DA_PASTA#list
 
 O `fetch` usa `credentials: "omit"`, `cache: "no-store"` e timeout de 20 segundos. A listagem é analisada para extrair dados dos links; o HTML recebido não é colocado no painel.
 
-Títulos são apresentados por `textContent` e `createTextNode`. Na inserção, o texto passa pelo editor nativo ou por nós de texto e quebras de linha. Os nomes dos arquivos não são executados como código.
+Títulos são apresentados por `textContent` e `createTextNode`. A mensagem é composta em uma única linha, com espaços entre o prefixo e o título e ` - ` entre o título e o link. Na inserção, o adaptador usa o comando nativo `insertText`, com um nó de texto inserido por `Range` como alternativa. Não insere elementos, estilos ou HTML na mensagem. Títulos e mensagens não são interpretados como código.
 
 Os links **Abrir vídeo** e o link do repositório abrem a página de destino no navegador, por ação do usuário. Os serviços de destino têm seus próprios comportamentos de rede e compartilhamento.
 
@@ -76,6 +77,9 @@ As pastas privadas não são consultadas usando a sessão corporativa. O catálo
 - Gravações de estado serializadas para preservar alterações simultâneas.
 - Ações do worker limitadas às páginas da extensão ou ao frame principal do Opa! permitido.
 - Configuração da origem e da mensagem personalizada alterável somente pelas páginas da extensão.
+- Títulos individuais de 1 a 500 caracteres, com limite de 5.000 personalizações no perfil. Salvar e restaurar títulos só são permitidos a páginas da extensão; chamadas da página do Opa! são rejeitadas.
+- As correções incluídas nos catálogos são reaplicadas pelo ID a cada atualização. Títulos individuais ficam separados dos catálogos e não são perdidos numa sincronização.
+- Datas de nomes são aceitas apenas quando formam uma data válida em dia/mês/ano. Marcações de descarte são filtradas sem excluir tutoriais sobre operações de exclusão.
 
 ## Desenvolvimento e distribuição
 

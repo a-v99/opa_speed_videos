@@ -10,9 +10,11 @@ npm test
 
 A suíte usa `jsdom`, APIs do Chrome simuladas e dados fictícios para testar o adaptador. Nenhum teste envia mensagens no Opa! ou modifica o Drive.
 
-Os catálogos, as pastas pessoais, a busca, a composição da mensagem, as permissões e as migrações são conferidos, incluindo falhas, duplicação e manutenção dos favoritos.
+Os catálogos, as pastas pessoais, a busca, a composição da mensagem, as permissões e as migrações são conferidos, incluindo falhas, duplicação e manutenção dos favoritos. A inserção confere o formato em uma única linha no evento `input` e numa leitura posterior para envio, além da ausência de HTML inserido, preservação do rascunho e tratamento de nomes como texto.
 
-`fixtures/drive/` contém as listagens públicas de referência de 08/10/2026, sanitizadas para manter apenas títulos e links em HTML. Os 699 registros dos quatro setores são comparados com o resultado da leitura completa; pastas excluídas não são consultadas. Imagens, scripts, estilos externos e o HTML de atendimentos não são incluídos.
+`fixtures/drive/` contém as listagens públicas de referência de 08/10/2026, sanitizadas para manter apenas títulos e links em HTML. Das 699 entradas originais, 696 são elegíveis após ignorar os três itens DELETAR de Integrações. A leitura completa é comparada com os catálogos; pastas excluídas não são consultadas. Imagens, scripts, estilos externos e o HTML de atendimentos não são incluídos.
+
+Os testes de títulos usam a página de opções conectada ao worker simulado. Conferem pasta e vídeo selecionados, salvamento, busca e inserção usando o novo nome, atualização com o popup aberto, persistência após atualizar/reiniciar, restauração do padrão, pastas pessoais, limites e rejeição de chamadas externas. Datas válidas e marcações de descarte são testadas separadamente de números comuns e tutoriais sobre exclusão.
 
 Para usar outro conjunto de listagens, defina `SPEEDVIDEOS_TREE_INDEX` com o caminho do índice JSON. Os caminhos `file` das pastas podem ser absolutos ou relativos ao diretório desse índice.
 

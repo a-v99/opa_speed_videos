@@ -310,21 +310,6 @@
       "folderPath": "Integrações Gerais"
     },
     {
-      "id": "18YWyvBh7HrNcaRGiQp0By0YDibKmG57P",
-      "originalFilename": "➡ | DELETAR | Integrações | E-mail | NF+Boleto+Fatura detalha",
-      "title": "Integrações | E-mail | NF+Boleto+Fatura detalha",
-      "topic": "DELETAR",
-      "displayTitle": "DELETAR | Integrações | E-mail | NF+Boleto+Fatura detalha",
-      "hasSubject": true,
-      "dateInFilename": null,
-      "format": null,
-      "url": "https://drive.google.com/file/d/18YWyvBh7HrNcaRGiQp0By0YDibKmG57P/view?usp=drive_web",
-      "checkmarkInFilename": false,
-      "searchText": "➡ | deletar | integracoes | e-mail | nf+boleto+fatura detalha integracoes | e-mail | nf+boleto+fatura detalha deletar  integracoes gerais",
-      "folderId": "1XPkYMIMtJJm1B0Wp2PMLwx5Wa_vYZ_LK",
-      "folderPath": "Integrações Gerais"
-    },
-    {
       "id": "1YrnWYeerCAxeJ5PYNcz8tiwOiaezzAcH",
       "originalFilename": "➡ |10/08/2026 | Integrações | Central do Assinante | Configuração para troca de senha pelo cliente por E-mail e SMS.mp4",
       "title": "Central do Assinante | Configuração para troca de senha pelo cliente por E-mail e SMS",
@@ -342,45 +327,15 @@
     {
       "id": "1_fcFNw5Le9N8H241i672CIrC1qb9v3uN",
       "originalFilename": "➡ |10/08/2026| | Integrações | Geral | Plano de venda com foco em produtos MVNO e TV .mp4",
-      "title": "Integrações | Geral | Plano de venda com foco em produtos MVNO e TV",
-      "topic": "",
+      "title": "Geral | Plano de venda com foco em produtos MVNO e TV",
+      "topic": "Integrações",
       "displayTitle": "Integrações | Geral | Plano de venda com foco em produtos MVNO e TV",
-      "hasSubject": false,
+      "hasSubject": true,
       "dateInFilename": "2026-08-10",
       "format": "mp4",
       "url": "https://drive.google.com/file/d/1_fcFNw5Le9N8H241i672CIrC1qb9v3uN/view?usp=drive_web",
       "checkmarkInFilename": false,
-      "searchText": "➡ |10/08/2026| | integracoes | geral | plano de venda com foco em produtos mvno e tv .mp4 integracoes | geral | plano de venda com foco em produtos mvno e tv   integracoes gerais",
-      "folderId": "1XPkYMIMtJJm1B0Wp2PMLwx5Wa_vYZ_LK",
-      "folderPath": "Integrações Gerais"
-    },
-    {
-      "id": "1c-C1v3OC0lfPb874SRapm-5d5gR1xU5K",
-      "originalFilename": "Deletar",
-      "title": "Deletar",
-      "topic": "Integrações Gerais",
-      "displayTitle": "Deletar",
-      "hasSubject": false,
-      "dateInFilename": null,
-      "format": null,
-      "url": "https://drive.google.com/file/d/1c-C1v3OC0lfPb874SRapm-5d5gR1xU5K/view?usp=drive_web",
-      "checkmarkInFilename": false,
-      "searchText": "deletar deletar integracoes gerais  integracoes gerais",
-      "folderId": "1XPkYMIMtJJm1B0Wp2PMLwx5Wa_vYZ_LK",
-      "folderPath": "Integrações Gerais"
-    },
-    {
-      "id": "1t3E2sN7KukG74hyEXBdA7tKDIgwA-_s7",
-      "originalFilename": "Deletar",
-      "title": "Deletar",
-      "topic": "Integrações Gerais",
-      "displayTitle": "Deletar",
-      "hasSubject": false,
-      "dateInFilename": null,
-      "format": null,
-      "url": "https://drive.google.com/file/d/1t3E2sN7KukG74hyEXBdA7tKDIgwA-_s7/view?usp=drive_web",
-      "checkmarkInFilename": false,
-      "searchText": "deletar deletar integracoes gerais  integracoes gerais",
+      "searchText": "➡ |10/08/2026| | integracoes | geral | plano de venda com foco em produtos mvno e tv .mp4 geral | plano de venda com foco em produtos mvno e tv integracoes  integracoes gerais",
       "folderId": "1XPkYMIMtJJm1B0Wp2PMLwx5Wa_vYZ_LK",
       "folderPath": "Integrações Gerais"
     },
@@ -2245,7 +2200,7 @@
       "folderPath": "Integrações Gerais"
     }
   ],
-  "itemCount": 149,
+  "itemCount": 146,
   "folders": [
     {
       "folderId": "1XPkYMIMtJJm1B0Wp2PMLwx5Wa_vYZ_LK",

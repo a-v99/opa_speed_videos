@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Opa! — Speed Vídeos",
-  "version": "0.8.3",
+  "version": "0.8.6",
   "minimum_chrome_version": "106",
   "description": "Pesquise Speed Vídeos por setor, adicione pastas públicas pessoais do Drive e insira os links no rascunho do atendimento.",
   "permissions": ["storage", "scripting", "clipboardWrite"],

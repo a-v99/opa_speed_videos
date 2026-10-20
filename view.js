@@ -181,7 +181,8 @@
     const messageLabel = el("label", "sv-check");
     const includeTitle = el("input"); includeTitle.type = "checkbox"; includeTitle.checked = true;
     messageLabel.append(includeTitle, document.createTextNode("Incluir mensagem e título ao inserir"));
-    controls.append(areaSwitch, input, filters, messageLabel);
+    headerActions.prepend(areaSwitch);
+    controls.append(input, filters, messageLabel);
     const counter = el("div", "sv-counter"); counter.setAttribute("aria-live", "polite");
     const list = el("div", "sv-list"); list.setAttribute("aria-label", "Resultados da pesquisa");
     const feedback = el("p", "sv-status"); feedback.setAttribute("role", "status");
@@ -269,7 +270,7 @@
     areaControls(); render();
     status(state.opaOrigin ? "Escolha um vídeo para inserir ou copiar." : "Ative a integração com o Opa! em Opções para inserir no chat.");
     function changed(values, area) {
-      if (area !== "local" || destroyed || !(values.favorites || values.catalog || values.catalogs || values.activeArea || values.personalFolders || values.opaOrigin || values.introduction)) return;
+      if (area !== "local" || destroyed || !(values.favorites || values.catalog || values.catalogs || values.activeArea || values.personalFolders || values.opaOrigin || values.introduction || values.videoTitles)) return;
       send({ type: "SV_STATE" }).then((result) => applyState(result.state)).catch((error) => status(error.message, true));
     }
     chrome.storage.onChanged.addListener(changed);

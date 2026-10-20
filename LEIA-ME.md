@@ -1,4 +1,4 @@
-# Opa! — Speed Vídeos · 0.8.3
+# Opa! — Speed Vídeos · 0.8.6
 
 Extensão para Chrome com os setores **Fiscal**, **Estoque**, **Financeiro** e **Integrações Gerais**, além de **pastas pessoais do Drive**. Pesquisa os vídeos das pastas e subpastas de cada setor e acrescenta o link ao rascunho do atendimento no Opa! Suite.
 
@@ -9,6 +9,8 @@ O endereço já está definido: **https://suporte.ixcsoft.com.br**. Não é nece
 1. Extraia este ZIP e substitua os arquivos dentro da **mesma pasta `opa-speedvideos` que você carregou no Chrome**.
 2. Em `chrome://extensions`, clique no botão **Recarregar** da extensão Speed Vídeos.
 3. Recarregue também a página do Opa!.
+
+A versão 0.8.6 inclui **Opções → Ajustar vídeo** para escolher a pasta e o vídeo e salvar o título desejado. Também incorpora os catálogos corrigidos, retira datas compactas dos títulos e ignora marcações de descarte. O seletor **Catálogo** fica no cabeçalho, ao lado de **Atualizar** e **Opções**.
 
 Manter a mesma pasta permite conservar os favoritos, a mensagem personalizada e a última área escolhida. Os catálogos salvos de Fiscal e Estoque são preservados. Na atualização da versão 0.5, o catálogo do Financeiro limitado a Contratos é substituído automaticamente pelo catálogo completo da pasta principal, já incluído neste pacote; não é necessário autorizar o Drive para essa migração. Os 31 links de Contratos continuam incluídos e seus favoritos são mantidos. A data de atualização do Financeiro é limpa, pois se referia à pasta anterior. Atualizações já salvas com a nova pasta principal são preservadas.
 
@@ -26,7 +28,7 @@ Se você instalou pelo GitHub, selecione a raiz da pasta clonada, onde está o m
 
 ## Usar
 
-- Escolha um setor ou uma **pasta pessoal** no seletor **Catálogo**, no topo do menu. Setores e pastas pessoais ficam em grupos separados. O mesmo dropdown aparece no ícone da extensão.
+- Escolha um setor ou uma **pasta pessoal** no seletor **Catálogo**, no cabeçalho, ao lado de **Atualizar** e **Opções**. Setores e pastas pessoais ficam em grupos separados. O mesmo dropdown aparece no ícone da extensão.
 - O último setor escolhido é lembrado. Ao trocar, a pesquisa e o filtro de favoritos são limpos para mostrar os vídeos do novo setor.
 - Clique em **Atualizar**, no topo do menu, para buscar os vídeos das pastas e subpastas dos setores e das suas pastas pessoais. Ao concluir, a extensão informa quantos vídeos novos encontrou em cada setor. O botão também está disponível no ícone da extensão.
 - Pesquise por uma ou mais palavras. A busca ignora maiúsculas e acentos.
@@ -42,16 +44,32 @@ Se o botão não aparecer, confira se você está no endereço acima, recarregue
 Com mensagem e título habilitados, o formato inserido é:
 
 ```text
-Sua mensagem personalizada
-Assunto | Nome do vídeo
-https://drive.google.com/file/d/ID_DO_VIDEO/view
+Sua mensagem personalizada: Assunto | Nome do vídeo - https://drive.google.com/file/d/ID_DO_VIDEO/view
 ```
+
+O texto é inserido sem quebras de linha ou formatação HTML. A mensagem personalizada recebe dois-pontos ao final quando necessário, e o link é separado do título por ` - `. Com a mensagem personalizada vazia, fica **Assunto | Nome do vídeo - link**. A opção de inserir somente o link continua disponível.
 
 Os cartões do popup e do menu do chat exibem **Assunto | Nome do vídeo** em todos os setores e nas pastas pessoais, com títulos de **13 px**. Se o nome original do arquivo não trouxer um assunto, o cartão e a mensagem inserida mostram **somente o nome**, sem acrescentar o setor como assunto. A data fica abaixo do título, quando disponível.
 
-No Fiscal, o assunto e o nome seguem o texto do arquivo, retirando o indicador de conferência, a data inicial reconhecida e a extensão de vídeo. O assunto abreviado **Tipo documento** é exibido como **Tipo de documento**, inclusive na mensagem inserida; o nome original continua pesquisável. Prefixos entre colchetes do Financeiro, como `[Contratos | Descontos]`, são identificados como assunto e aparecem antes do nome do vídeo. Outros nomes de assuntos mantêm o formato extraído do arquivo.
+Nos títulos automáticos do Fiscal, o assunto e o nome seguem o texto do arquivo, retirando o indicador de conferência, as datas reconhecidas e a extensão de vídeo. O assunto abreviado **Tipo documento** é exibido como **Tipo de documento**, inclusive na mensagem inserida; o nome original continua pesquisável. Prefixos entre colchetes do Financeiro, como `[Contratos | Descontos]`, são identificados como assunto e aparecem antes do nome do vídeo. Outros nomes de assuntos mantêm o formato extraído do arquivo. Um título salvo em **Ajustar vídeo** tem prioridade sobre essas regras.
 
 ## Conteúdo e atualização
+
+### Ajustar o título de um vídeo
+
+1. Abra **Opções → Ajustar vídeo**.
+2. Escolha a **Pasta** e depois o **Vídeo**.
+3. Altere o **Título exibido** como preferir e clique em **Salvar título**. Não é obrigatório manter assunto ou separadores no título personalizado.
+4. O novo nome aparece no catálogo, na busca e na mensagem inserida. Ele fica salvo neste perfil do Chrome, vinculado ao ID do vídeo, e permanece após atualizar os catálogos ou reiniciar o navegador.
+5. Para remover sua alteração, selecione o mesmo vídeo e clique em **Restaurar padrão**.
+
+O arquivo no Drive mantém o nome e o link originais. Um mesmo arquivo presente em mais de uma pasta usa o título que você escolheu. As alterações são individuais e não são distribuídas aos colegas. Títulos podem ter até 500 caracteres e são apresentados como texto simples.
+
+As correções fornecidas nos arquivos JSON desta versão também são preservadas ao atualizar. O título individual salvo nas opções tem prioridade sobre elas. Restaurar o padrão volta ao título do catálogo, incluindo essas correções.
+
+Datas válidas como `20102026`, `20/10/2026` e `25/04/ 2025` são reconhecidas como dia/mês/ano, retiradas do título automático e mantidas na informação de data. Datas impossíveis e números comuns permanecem no nome. O título personalizado é respeitado, inclusive quando você decide manter uma data nele.
+
+Arquivos com marcações de descarte, como **DELETAR**, **APAGAR**, **PARA EXCLUIR**, **REMOVER** ou **DESCARTAR**, são ignorados. A marcação deve estar isolada ou separada do título, por exemplo `DELETAR | Tutorial`. Vídeos como **Como deletar uma renegociação**, **Excluir Lote** e tutoriais sobre o método **DELETE** da API permanecem no catálogo.
 
 ### Pastas pessoais
 
@@ -92,11 +110,11 @@ https://drive.google.com/drive/folders/1PPy8Ny8J1WQbziEbVLF9JhZBUP1pTEDC
 
 O Drive identifica esta pasta como **2026 Financeiro - Speed Videos Suporte**. Foram percorridas 33 pastas, contando a principal, sem falhas na consulta. O catálogo inclui Contratos (31 tutoriais), Contas a pagar, Contas a receber, Conciliação Bancária, Query Builder, Relatórios e a Biblioteca de vídeos do Cadu, entre outras categorias. As subpastas da biblioteca também foram percorridas, inclusive o nível adicional de Etiqueta Anatel. Não foram encontrados nomes de pastas excluídos pela regra nesta árvore. O atualizador também aceita setores cujos vídeos estejam inteiramente em subpastas, sem exigir vídeos na raiz.
 
-**Integrações Gerais: 149 registros de tutoriais.** Pasta:
+**Integrações Gerais: 146 registros de tutoriais.** Pasta:
 
 https://drive.google.com/drive/folders/1XPkYMIMtJJm1B0Wp2PMLwx5Wa_vYZ_LK
 
-O Drive identifica a pasta como **2026 Integrações/API/Franquia - Speed Videos Suporte**. Os 149 arquivos da raiz foram incluídos. A subpasta **Fora do contexto Helper Mídia - Integrações e API** foi ignorada pela mesma regra aplicada aos outros setores. A busca encontra termos como API, SVA, Central do Assinante, CRM e webhooks.
+O Drive identifica a pasta como **2026 Integrações/API/Franquia - Speed Videos Suporte**. Dos 149 arquivos originais da raiz, 146 foram incluídos; três itens DELETAR foram retirados. A subpasta **Fora do contexto Helper Mídia - Integrações e API** foi ignorada pela mesma regra aplicada aos outros setores. A busca encontra termos como API, SVA, Central do Assinante, CRM e webhooks.
 
 Os nomes com seta e data entre separadores, como `➡ | 07/10/2026 | Integrações | SVA | Nome do vídeo`, são tratados para exibir e inserir `Integrações | SVA | Nome do vídeo`; a data continua na identificação do cartão e o nome original continua pesquisável. Os arquivos sem extensão visível foram mantidos. Há três registros com “DELETAR” no nome, também mantidos: a exclusão solicitada se aplica às pastas, não a esses nomes de arquivos. O conteúdo dos vídeos não foi revisado.
 
@@ -132,7 +150,7 @@ Títulos, assuntos, datas e marcas de verificação vieram dos nomes dos arquivo
 
 O adaptador foi escrito a partir do HTML fornecido: campo `#input_envio_msg[contenteditable="true"]` e a primeira seção de ações dentro de `.message-sender-toolbar`. Um observador acompanha substituições do campo e da barra durante a navegação do aplicativo.
 
-Você já confirmou a pesquisa e a cópia de links em atendimentos reais. Os novos fluxos de pastas pessoais e a inclusão de Integrações Gerais foram conferidos em ambiente simulado. O HTML permite identificar os elementos, mas não contém todos os comportamentos do aplicativo em execução. Se o Opa! tiver tratamento específico de edição ou mudar a estrutura da página, o adaptador pode precisar de ajuste. A edição usa a operação nativa de texto do navegador quando disponível, com um complemento que dispara o evento de entrada; o envio permanece manual.
+Você já confirmou a pesquisa e a cópia de links em atendimentos reais. Os fluxos de pastas pessoais e a inclusão de Integrações Gerais foram conferidos em ambiente simulado. O HTML permite identificar os elementos, mas não contém todos os comportamentos do aplicativo em execução. Se o Opa! tiver tratamento específico de edição ou mudar a estrutura da página, o adaptador pode precisar de ajuste. A inserção usa texto simples em uma única linha, acrescentando apenas um espaço quando necessário para separar o rascunho existente. A operação nativa do navegador é usada quando disponível, com emissão do evento de entrada quando necessário; o envio permanece manual.
 
 Compatibilidade inicial: Chrome 106 ou superior. Outros navegadores baseados em Chromium podem funcionar, mas não foram testados. Esta extensão é um projeto independente, sem publicação ou homologação como produto da IXCSoft.
 

@@ -1,6 +1,6 @@
 {
   "name": "opa-speed-videos",
-  "version": "0.8.3",
+  "version": "0.8.6",
   "private": true,
   "description": "Extensão para pesquisar vídeos de suporte e inserir links no rascunho do Opa! Suite.",
   "license": "MIT",

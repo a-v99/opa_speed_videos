@@ -8,6 +8,7 @@
   const maxFolders = 100;
   const maxItems = 5000;
   const maxPersonalFolders = 20;
+  const maxVideoTitleLength = 500;
   const areas = [
     { id: "fiscal", label: "Fiscal", sourceName: "2026 Fiscal - Speed Videos Suporte",
       folderId: "19eincFNoNqrJajk3ez8Pn-_-8mBg0fZ8", bundledFile: "catalog.json",
@@ -37,6 +38,27 @@
   const normalize = (text) => String(text ?? "").normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
   const isIgnoredFolder = (name) => /fora\s+(?:de|do)\s+contexto|regravar/.test(normalize(name));
+  function isIgnoredFile(name) {
+    const label = normalize(name).replace(/\.(mp4|mkv|webm|mov|avi)$/i, "")
+      .replace(/^[✔➡→]\uFE0F?\s*(?:\|\s*)?/, "").replace(/^copia de\s+/, "");
+    // Match disposal labels, not instructions such as "Como deletar uma renegociação".
+    return /(?:^|[|\[\](){};:_-])\s*(?:(?:para|pra)\s+)?(?:deletar|apagar|excluir|remover|descartar)(?:\s+depois)?\s*(?=$|[|\[\](){};:_-])/.test(label);
+  }
+  function filenameWithoutDates(value) {
+    let dateInFilename = null;
+    const text = value.replace(/(^|[^\p{L}\p{N}])(?:(\d{2})\s*[/_-]\s*(\d{2})\s*[/_-]\s*(\d{4})|(\d{2})(\d{2})(\d{4}))(?=$|[^\p{L}\p{N}])/gu,
+      (match, prefix, day, month, year, compactDay, compactMonth, compactYear) => {
+        day = day || compactDay; month = month || compactMonth; year = year || compactYear;
+        const d = Number(day), m = Number(month), y = Number(year);
+        const leap = y % 4 === 0 && (y % 100 !== 0 || y % 400 === 0);
+        const days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+        if (!y || m < 1 || m > 12 || d < 1 || d > days[m - 1]) return match;
+        dateInFilename ||= `${year}-${month}-${day}`;
+        return prefix;
+      });
+    return { text: text.replace(/\(\s*\)|\[\s*\]/g, " ").replace(/([|_-])\s*\1+/g, "$1")
+      .replace(/^[\s|_-]+|[\s|_-]+$/g, "").replace(/\s+/g, " ").trim(), dateInFilename };
+  }
   function folderFromLink(name, href) {
     let url; try { url = new URL(href); } catch { return null; }
     const match = url.pathname.match(/^\/drive\/(?:u\/\d+\/)?folders\/([a-zA-Z0-9_-]+)\/?$/);
@@ -92,6 +114,26 @@
     if (typeof value !== "string" || value.length > 2000) throw new Error("A mensagem deve ter até 2.000 caracteres.");
     return value.replace(/\r\n?/g, "\n").trim();
   }
+  function validateVideoTitle(value) {
+    if (typeof value !== "string" || !value.trim() || value.length > maxVideoTitleLength) {
+      throw new Error(`O título deve ter de 1 a ${maxVideoTitleLength} caracteres.`);
+    }
+    return value.replace(/\s+/g, " ").trim();
+  }
+  function validateVideoTitles(value = {}) {
+    if (!value || typeof value !== "object" || Array.isArray(value) || Object.keys(value).length > maxItems) {
+      throw new Error("A lista de títulos personalizados é inválida.");
+    }
+    return Object.fromEntries(Object.entries(value).map(([id, title]) => {
+      if (!/^[a-zA-Z0-9_-]+$/.test(id)) throw new Error("O identificador do vídeo é inválido.");
+      return [id, validateVideoTitle(title)];
+    }));
+  }
+  function catalogWithVideoTitles(catalog, titles) {
+    return { ...catalog, items: catalog.items.map((item) => Object.hasOwn(titles, item.id)
+      ? { ...item, defaultDisplayTitle: item.displayTitle, displayTitle: titles[item.id], hasCustomTitle: true,
+        searchText: `${item.searchText} ${normalize(titles[item.id])}` } : item) };
+  }
   const aliases = (topic) => {
     const value = normalize(topic);
     if (value.includes("nfs-e")) return "nfse nfs-e nota fiscal servico nacional";
@@ -122,14 +164,13 @@
     const match = url.pathname.match(/^\/file\/d\/([a-zA-Z0-9_-]+)\/view$/);
     if (url.protocol !== "https:" || url.hostname !== "drive.google.com" || url.port || url.username || url.password || !match) return null;
     const original = String(filename).trim();
-    if (!original || /nomenclatura do conteudo/.test(normalize(original))) return null;
+    if (!original || isIgnoredFile(original) || /nomenclatura do conteudo/.test(normalize(original))) return null;
     if (/\.(pdf|docx?|xlsx?|csv|txt|json|xml|png|jpe?g|gif|svg|pptx?|zip|rar|7z)$/i.test(original)) return null;
     let cleaned = original.replace(/^[✔➡→]\uFE0F?\s*(?:\|\s*)?/, "").replace(/^Cópia de\s+/i, "");
-    const date = cleaned.match(/^\|?\s*(\d{2})[/_-](\d{2})[/_-](\d{4})(?:\s*\|\s*|\s*-?\s*)/);
-    if (date) cleaned = cleaned.slice(date[0].length);
     const format = cleaned.match(/\.(mp4|mkv|webm|mov|avi)$/i);
     if (format) cleaned = cleaned.slice(0, -format[0].length);
-    cleaned = cleaned.replace(/\s+/g, " ").trim();
+    const dated = filenameWithoutDates(cleaned);
+    cleaned = dated.text;
     const bracketedSubject = cleaned.match(/^\[([^\]]+)\]\s*(.+)$/);
     const pipe = cleaned.indexOf("|");
     const divider = pipe >= 0 && !/campos\s*:/i.test(cleaned.slice(0, pipe)) ? pipe : -1;
@@ -151,7 +192,7 @@
       "sla": "SLA" })[normalize(topic)] || topic;
     if (!title) return null;
     return { id: match[1], originalFilename: original, title, topic, displayTitle, hasSubject,
-      dateInFilename: date ? `${date[3]}-${date[2]}-${date[1]}` : null,
+      dateInFilename: dated.dateInFilename,
       format: format ? format[1].toLowerCase() : null, url: url.href,
       checkmarkInFilename: original.startsWith("✔"),
       searchText: normalize(`${original} ${title} ${topic} ${aliases(topic)}`) };
@@ -166,13 +207,23 @@
     if (expectedAreaId && (raw.source?.folderId !== area.folderId || (raw.areaId && raw.areaId !== area.id))) {
       throw new Error("O catálogo não corresponde à pasta da área selecionada.");
     }
+    const titleOverrides = raw.titleOverrides || {};
+    if (typeof titleOverrides !== "object" || Array.isArray(titleOverrides) || Object.keys(titleOverrides).length > maxItems
+      || Object.entries(titleOverrides).some(([id, title]) => !/^[a-zA-Z0-9_-]+$/.test(id)
+        || typeof title !== "string" || !title.trim() || title.length > 2000)) {
+      throw new Error("O catálogo contém uma correção de título inválida.");
+    }
     const ids = new Set();
-    const items = raw.items.map((input) => {
+    const items = raw.items.filter((input) => !isIgnoredFile(input.originalFilename)).map((input) => {
       const item = itemFromFile(input.originalFilename, input.url, area.label);
       if (!item || item.id !== input.id || ids.has(item.id)) {
         throw new Error("O catálogo contém um registro inválido ou repetido.");
       }
       ids.add(item.id);
+      if (Object.hasOwn(titleOverrides, item.id)) {
+        item.displayTitle = titleOverrides[item.id].replace(/\s+/g, " ").trim();
+        item.searchText += ` ${normalize(item.displayTitle)}`;
+      }
       if (input.folderId !== undefined || input.folderPath !== undefined) {
         if (typeof input.folderId !== "string" || !/^[a-zA-Z0-9_-]+$/.test(input.folderId)
           || typeof input.folderPath !== "string" || input.folderPath.length > 2000) {
@@ -183,6 +234,7 @@
       }
       return item;
     });
+    if (!items.length && !area.personal) throw new Error("O catálogo não contém uma lista válida de vídeos.");
     return { ...raw, schemaVersion: 1, areaId: area.id, items, itemCount: items.length };
   }
   function parsePublicFolderPage(html, areaId = "fiscal") {
@@ -222,17 +274,21 @@
       && (!favoritesOnly || starred.has(item.id))
       && tokens.every((token) => `${item.searchText} ${aliases(item.topic)}`.includes(token)))
       .sort((a, b) => {
-        const score = (item) => tokens.reduce((n, token) => n + (normalize(item.title).includes(token) ? 2 : 0), 0);
-        return score(b) - score(a) || a.title.localeCompare(b.title, "pt-BR");
+        const score = (item) => tokens.reduce((n, token) => n + (normalize(item.displayTitle || item.title).includes(token) ? 2 : 0), 0);
+        return score(b) - score(a) || (a.displayTitle || a.title).localeCompare(b.displayTitle || b.title, "pt-BR");
       });
   }
   function messageFor(item, includeTitle, introduction = defaultIntroduction) {
     if (!includeTitle) return item.url;
-    return [validateIntroduction(introduction), item.displayTitle || item.title, item.url].filter(Boolean).join("\n");
+    const message = validateIntroduction(introduction).replace(/\s+/g, " ");
+    const title = (item.displayTitle || item.title).replace(/\s+/g, " ").trim();
+    const prefix = message ? `${message.replace(/:$/, "")}: ` : "";
+    return `${prefix}${title} - ${item.url}`;
   }
   globalThis.SpeedVideosCore = { opaOrigin, opaPattern, defaultIntroduction, legacyFinanceFolderId, maxFolders, maxItems,
-    maxPersonalFolders, personalFolderFromUrl, validatePersonalFolder, validatePersonalFolders,
+    maxPersonalFolders, maxVideoTitleLength, personalFolderFromUrl, validatePersonalFolder, validatePersonalFolders,
     areas: Object.freeze(areas), areaConfig, folderId, folderUrl, folderFeed, normalize,
-    isIgnoredFolder, folderFromLink, foldersInHtml, validateIntroduction, normalizeOpaUrl, originPattern,
+    isIgnoredFolder, isIgnoredFile, folderFromLink, foldersInHtml, validateIntroduction,
+    validateVideoTitle, validateVideoTitles, catalogWithVideoTitles, normalizeOpaUrl, originPattern,
     itemFromFile, validateCatalog, parsePublicFolderPage, catalogFromTree, parsePublicFolder, search, messageFor };
 })();

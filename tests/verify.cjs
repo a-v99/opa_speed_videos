@@ -230,7 +230,7 @@ test("search handles accents, multiple terms, aliases, topics and favorites", ()
   assert.equal(core.search(items, "", "", true, []).length, 0);
   assert.ok(core.search(items, "", "Query Builder").every((i) => i.topic === "Query Builder"));
   assert.equal(core.messageFor(favorite, false), favorite.url);
-  assert.ok(core.messageFor(favorite, true).endsWith(favorite.title + "\n" + favorite.url));
+  assert.ok(core.messageFor(favorite, true).endsWith(favorite.title + " - " + favorite.url));
 });
 test("Opa configuration accepts paths but rejects credentials and non-web URLs", () => {
   const core = coreContext();
@@ -273,7 +273,7 @@ test("worker honors withheld Opa access and injects only the fixed exact origin"
 });
 test("website context cannot change settings or update the catalog", async () => {
   const worker = workerHarness();
-  for (const type of ["SV_SET_ORIGIN", "SV_SAVE_CATALOG", "SV_FETCH_FOLDER"]) {
+  for (const type of ["SV_SET_ORIGIN", "SV_SAVE_CATALOG", "SV_FETCH_FOLDER", "SV_SET_VIDEO_TITLE", "SV_RESET_VIDEO_TITLE"]) {
     assert.equal((await worker.send({ type, origin, catalog: initialCatalog }, `${origin}/chat`)).ok, false);
   }
   assert.deepEqual(worker.stored, {});
@@ -310,16 +310,19 @@ test("fallback insertion preserves the draft and AI field, raises input, and nev
   try {
     const editor = page.document.getElementById("input_envio_msg");
     editor.innerHTML = "Olá, <b>cliente</b>!";
-    let inputCount = 0, sendCount = 0, enterCount = 0;
-    editor.addEventListener("input", () => inputCount++);
+    let inputCount = 0, sendCount = 0, enterCount = 0, inputText;
+    editor.addEventListener("input", () => { inputCount++; inputText = editor.textContent; });
     page.document.getElementById("fixture-send").addEventListener("click", () => sendCount++);
     page.document.addEventListener("keydown", (e) => { if (e.key === "Enter") enterCount++; });
     page.run("content.js"); await page.settle();
     const host = page.document.getElementById("opa-speedvideos-trigger");
     assert.ok(host); assert.equal(host.parentElement.dataset.group, "first");
-    const text = `Vídeo escolhido\n${initialCatalog.items[0].url}`;
+    const text = `Confira: Vídeo escolhido - ${initialCatalog.items[0].url}`;
     assert.equal(page.send({ type: "SV_INSERT", text }).ok, true);
-    assert.equal(readableText(editor), "Olá, cliente!\n\n" + text);
+    assert.equal(readableText(editor), "Olá, cliente! " + text);
+    assert.equal(inputText, "Olá, cliente! " + text);
+    assert.equal(editor.textContent, inputText);
+    assert.equal(editor.querySelector("span,br,div"), null, "insertion must not add HTML formatting or line-break elements");
     assert.equal(editor.querySelector("b").textContent, "cliente");
     assert.equal(inputCount, 1); assert.equal(sendCount, 0); assert.equal(enterCount, 0);
     assert.equal(page.document.getElementById("message_agent_smith_v2").value, "Rascunho da IA");
@@ -327,20 +330,69 @@ test("fallback insertion preserves the draft and AI field, raises input, and nev
     assert.equal(page.send({ type: "SV_INSERT", text: "a".repeat(10001) }).ok, false);
   } finally { page.close(); }
 });
-test("native editing is not duplicated and produces only one input event", async () => {
+test("native editing inserts one plain-text line and produces only one input event", async () => {
   const page = pageHarness();
   try {
     const editor = page.document.getElementById("input_envio_msg");
-    let count = 0; editor.addEventListener("input", () => count++);
+    editor.innerHTML = "Olá, <b>cliente</b>!";
+    let count = 0, inputText, sentText;
+    const nativeCommands = [];
+    editor.addEventListener("input", () => { count++; inputText = editor.textContent; });
+    page.document.getElementById("fixture-send").addEventListener("click", () => { sentText = editor.textContent; });
     page.document.execCommand = (command, _, text) => {
+      nativeCommands.push(command);
       assert.equal(command, "insertText");
-      page.window.getSelection().getRangeAt(0).insertNode(page.document.createTextNode(text));
-      editor.dispatchEvent(new page.window.InputEvent("input", { bubbles: true, inputType: "insertText", data: text }));
+      const range = page.window.getSelection().getRangeAt(0);
+      range.insertNode(page.document.createTextNode(text));
+      editor.dispatchEvent(new page.window.InputEvent("input", { bubbles: true, inputType: "insertText" }));
       return true;
     };
     page.run("content.js"); await page.settle();
-    assert.equal(page.send({ type: "SV_INSERT", text: initialCatalog.items[0].url }).ok, true);
-    assert.equal(readableText(editor), initialCatalog.items[0].url); assert.equal(count, 1);
+    const text = `Segue o vídeo: Tipo de documento | Cadastro - ${initialCatalog.items[0].url}`;
+    const expected = "Olá, cliente! " + text;
+    assert.equal(page.send({ type: "SV_INSERT", text }).ok, true);
+    assert.deepEqual(nativeCommands, ["insertText"]);
+    assert.equal(readableText(editor), expected);
+    assert.equal(inputText, expected);
+    assert.equal(editor.textContent, expected);
+    assert.equal(editor.querySelector("b").textContent, "cliente");
+    assert.equal(count, 1);
+    assert.equal(sentText, undefined, "inserting must not send automatically");
+    page.document.getElementById("fixture-send").click();
+    assert.equal(sentText, expected, "a later plain-text read for sending must keep every separator");
+  } finally { page.close(); }
+});
+test("fallback after refused or throwing native edits removes line breaks and keeps HTML inert", async () => {
+  for (const nativeEdit of [() => false, () => { throw new Error("Editing unavailable"); }]) {
+    const page = pageHarness();
+    try {
+      const editor = page.document.getElementById("input_envio_msg");
+      page.document.execCommand = nativeEdit;
+      let inputText;
+      editor.addEventListener("input", () => { inputText = editor.textContent; });
+      page.run("content.js"); await page.settle();
+      const text = `Veja <este> & "vídeo":\nAssunto | <img src=x onerror=alert(1)>\n${initialCatalog.items[0].url}`;
+      const expected = `Veja <este> & "vídeo": Assunto | <img src=x onerror=alert(1)> ${initialCatalog.items[0].url}`;
+      assert.equal(page.send({ type: "SV_INSERT", text }).ok, true);
+      assert.equal(editor.textContent, expected);
+      assert.equal(readableText(editor), expected);
+      assert.equal(inputText, expected);
+      assert.equal(editor.querySelector("img,script,este"), null);
+      assert.equal(editor.childElementCount, 0, "fallback must insert only a text node");
+    } finally { page.close(); }
+  }
+});
+test("successive insertions add only a space with no introduction and with link only", async () => {
+  const page = pageHarness();
+  try {
+    const editor = page.document.getElementById("input_envio_msg");
+    page.run("content.js"); await page.settle();
+    const first = `Tutorial sem assunto - ${initialCatalog.items[0].url}`;
+    const second = initialCatalog.items[1].url;
+    assert.equal(page.send({ type: "SV_INSERT", text: first }).ok, true);
+    assert.equal(page.send({ type: "SV_INSERT", text: second }).ok, true);
+    assert.equal(editor.textContent, first + " " + second);
+    assert.equal(readableText(editor), first + " " + second);
   } finally { page.close(); }
 });
 test("repeated injection and replacing the chat keep exactly one trigger", async () => {
@@ -520,6 +572,9 @@ test("popup has a sector dropdown and retains favorites when switching back", as
     const firstId = page.document.querySelector(".sv-link").href;
     page.document.querySelector(".sv-star").click(); await page.settle();
     const sector = page.document.querySelector(".sv-sector-select");
+    assert.ok(sector.closest(".sv-header-actions"));
+    assert.ok(sector.closest(".sv-header-actions").querySelector(".sv-refresh"));
+    assert.equal(page.document.querySelector(".sv-controls .sv-sector-select"), null);
     assert.equal(sector.options.length, coreContext().areas.length); assert.equal(page.document.querySelector(".sv-area-btn"), null);
     sector.value = "estoque"; sector.dispatchEvent(new page.window.Event("change")); await page.settle();
     assert.equal(page.document.querySelectorAll(".sv-card").length, 184);
@@ -720,7 +775,7 @@ test("even extension pages cannot configure HTTP, other hosts, alternate ports o
 
 test("all worker actions reject unrelated hosts and subframes before requesting access or changing data", async () => {
   const worker = workerHarness();
-  for (const type of ["SV_STATE", "SV_SET_AREA", "SV_FAVORITE", "SV_REQUEST_DRIVE", "SV_FETCH_FOLDER", "SV_SAVE_CATALOG", "SV_OPTIONS"]) {
+  for (const type of ["SV_STATE", "SV_SET_AREA", "SV_FAVORITE", "SV_REQUEST_DRIVE", "SV_FETCH_FOLDER", "SV_SAVE_CATALOG", "SV_SET_VIDEO_TITLE", "SV_RESET_VIDEO_TITLE", "SV_OPTIONS"]) {
     const message = { type, areaId: "estoque", id: initialCatalog.items[0].id, catalog: stockCatalog };
     for (const url of ["https://other.example/chat", `${origin}:8443/chat`, "http://suporte.ixcsoft.com.br/chat"]) {
       assert.equal((await worker.send(message, url, { tab: { id: 1 }, frameId: 0 })).ok, false);
@@ -848,13 +903,26 @@ test("excluded-folder matching ignores accents and case and worker extraction ha
 test("custom introduction keeps the original fiscal subject and title with a pipe, omitting date and extension", () => {
   const core = coreContext();
   const item = core.itemFromFile("✔ 07_10_2026-NFCom (62) | Como alterar o CFOP.webm", "https://drive.google.com/file/d/sample-video/view");
-  assert.equal(core.messageFor(item, true, "Olá! Segue a orientação:"), "Olá! Segue a orientação:\nNFCom (62) | Como alterar o CFOP\nhttps://drive.google.com/file/d/sample-video/view");
-  assert.equal(core.messageFor(item, true, ""), "NFCom (62) | Como alterar o CFOP\nhttps://drive.google.com/file/d/sample-video/view");
+  assert.equal(core.messageFor(item, true, "Olá! Segue a orientação:"), "Olá! Segue a orientação: NFCom (62) | Como alterar o CFOP - https://drive.google.com/file/d/sample-video/view");
+  assert.equal(core.messageFor(item, true, ""), "NFCom (62) | Como alterar o CFOP - https://drive.google.com/file/d/sample-video/view");
   assert.equal(core.messageFor(item, false, "Qualquer mensagem"), item.url);
   assert.throws(() => core.validateIntroduction("a".repeat(2001)), /2.000/);
   assert.equal(core.itemFromFile("Modelo.pdf", item.url), null);
   const query = core.itemFromFile("Clientes sem OSs (Campos: ID Cliente | Nome cliente).webm", item.url, "Estoque");
   assert.equal(query.title, "Clientes sem OSs (Campos: ID Cliente | Nome cliente)");
+});
+
+test("single-line message format handles saved line breaks, an absent subject and a missing colon", () => {
+  const core = coreContext();
+  const url = "https://drive.google.com/file/d/single-line-video/view";
+  const item = core.itemFromFile("Tutorial sem assunto.webm", url);
+  assert.equal(core.messageFor(item, true), `Segue o vídeo com o passo a passo: Tutorial sem assunto - ${url}`);
+  assert.equal(core.messageFor(item, true, "  Olá!\r\nSegue o vídeo:\n"), `Olá! Segue o vídeo: Tutorial sem assunto - ${url}`);
+  assert.equal(core.messageFor(item, true, "Confira"), `Confira: Tutorial sem assunto - ${url}`);
+  assert.equal(core.messageFor(item, true, ""), `Tutorial sem assunto - ${url}`);
+  assert.equal(core.messageFor(item, false, "Olá!\nConfira:"), url);
+  const multilineTitle = { ...item, displayTitle: "Assunto | Tutorial\r\ncom várias\u2028linhas" };
+  assert.equal(core.messageFor(multilineTitle, true, "Confira:"), `Confira: Assunto | Tutorial com várias linhas - ${url}`);
 });
 
 test("worker saves individual message preferences and blocks edits from the Opa page", async () => {
@@ -875,8 +943,10 @@ test("options preview and save the introduction as plain text", async () => {
     const input = page.document.getElementById("message-introduction"); input.value = 'Olá! <img src="x">';
     input.dispatchEvent(new page.window.Event("input"));
     const preview = page.document.getElementById("message-preview");
-    assert.ok(preview.textContent.startsWith(input.value + "\n")); assert.equal(preview.querySelector("img"), null);
+    assert.ok(preview.textContent.startsWith(input.value + ": ")); assert.equal(preview.querySelector("img"), null);
     assert.ok(preview.textContent.includes(" | "));
+    assert.ok(preview.textContent.includes(" - https://drive.google.com/"));
+    assert.doesNotMatch(preview.textContent, /[\r\n\u2028\u2029]/);
     page.document.getElementById("message-form").dispatchEvent(new page.window.Event("submit", { cancelable: true })); await page.settle();
     assert.equal((await page.window.SpeedVideosView.send({ type: "SV_STATE" })).state.introduction, input.value);
     assert.match(page.document.getElementById("message-status").textContent, /Mensagem salva/);
@@ -897,7 +967,9 @@ test("chat insertion uses the latest saved custom message with subject, title an
     const editor = page.document.getElementById("input_envio_msg"); editor.textContent = "Olá, cliente!";
     let sent = 0; page.document.getElementById("fixture-send").addEventListener("click", () => sent++);
     panel.querySelector(".sv-primary").click(); await page.settle();
-    assert.equal(readableText(editor), `Olá, cliente!\n\nEste vídeo pode ajudar:\n${item.displayTitle}\n${url}`);
+    assert.equal(readableText(editor), `Olá, cliente! Este vídeo pode ajudar: ${item.displayTitle} - ${url}`);
+    assert.equal(editor.textContent, readableText(editor));
+    assert.equal(editor.querySelector("span,br,div"), null);
     assert.equal(sent, 0);
   } finally { page.close(); }
 });
@@ -933,7 +1005,7 @@ test("finance catalog preserves 290 public links from the main root, including a
   for (let index = 0; index < 290; index++) assert.equal(catalog.items[index].url, financeCatalog.items[index].url);
   const item = core.itemFromFile("[Contratos | Descontos] Como configurar o desconto.mp4", "https://drive.google.com/file/d/finance-test/view", "Financeiro");
   assert.equal(item.title, "Como configurar o desconto"); assert.equal(item.topic, "Contratos | Descontos");
-  assert.equal(core.messageFor(item, true, "Confira este tutorial:"), "Confira este tutorial:\nContratos | Descontos | Como configurar o desconto\nhttps://drive.google.com/file/d/finance-test/view");
+  assert.equal(core.messageFor(item, true, "Confira este tutorial:"), "Confira este tutorial: Contratos | Descontos | Como configurar o desconto - https://drive.google.com/file/d/finance-test/view");
   assert.ok(core.search(catalog.items, "descontos").length > 0);
 });
 
@@ -1326,7 +1398,7 @@ test("personal folder titles are rendered as text and chat insertion keeps the d
     const editor = page.document.getElementById("input_envio_msg"); editor.textContent = "Olá!";
     let sent = 0; page.document.getElementById("fixture-send").addEventListener("click", () => sent++);
     panel.querySelector(".sv-card .sv-primary").click(); await page.settle();
-    assert.equal(readableText(editor), "Olá!\n\nVeja este vídeo:\nAssunto | Tutorial do mês\n" + personalVideo().url);
+    assert.equal(readableText(editor), "Olá! Veja este vídeo: Assunto | Tutorial do mês - " + personalVideo().url);
     assert.equal(sent, 0);
   } finally { popup.close(); page.close(); }
 });
@@ -1346,11 +1418,11 @@ test("options starts on a personal catalog and refreshes it without replacing fi
   } finally { popup.close(); page?.close(); }
 });
 
-test("Integrations is the fourth bundled sector with all 149 original links and an excluded review folder", () => {
+test("Integrations is the fourth bundled sector with all 146 eligible links and an excluded review folder", () => {
   const core = coreContext(); const catalog = core.validateCatalog(integrationsCatalog, "integracoes");
   assert.equal(core.areas.length, 4); assert.equal(core.areas[3].label, "Integrações Gerais");
   assert.equal(catalog.source.folderId, "1XPkYMIMtJJm1B0Wp2PMLwx5Wa_vYZ_LK");
-  assert.equal(catalog.items.length, 149); assert.equal(catalog.folders.length, 1);
+  assert.equal(catalog.items.length, 146); assert.equal(catalog.folders.length, 1);
   assert.equal(catalog.ignoredFolders.length, 1);
   assert.ok(core.isIgnoredFolder(catalog.ignoredFolders[0].name));
   for (let i = 0; i < catalog.items.length; i++) assert.equal(catalog.items[i].url, integrationsCatalog.items[i].url);
@@ -1366,7 +1438,7 @@ test("arrow and pipe date prefixes become clean Integration subjects and retain 
     const item = core.itemFromFile(name, link, "Integrações Gerais");
     assert.equal(item.topic, "Integrações"); assert.equal(item.title, "SVA | Configurar serviço");
     assert.equal(item.dateInFilename, "2026-10-07"); assert.equal(item.originalFilename, name);
-    assert.equal(core.messageFor(item, true, "Segue o tutorial:"), "Segue o tutorial:\nIntegrações | SVA | Configurar serviço\n" + link);
+    assert.equal(core.messageFor(item, true, "Segue o tutorial:"), "Segue o tutorial: Integrações | SVA | Configurar serviço - " + link);
   }
   const api = core.itemFromFile("➡ | 23/04/2025 | API | Como gerar token e URL da API", link, "Integrações Gerais");
   assert.equal(api.topic, "API"); assert.equal(api.title, "Como gerar token e URL da API");
@@ -1392,7 +1464,7 @@ test("a 0.7 installation gains Integrations without modifying its saved catalogs
   const worker = workerHarness(old.stored); const previous = clone(old.stored);
   await worker.lifecycle("onInstalled");
   const state = (await worker.send({ type: "SV_STATE" })).state;
-  assert.equal(state.catalogs.integracoes.items.length, 149); assert.equal(state.activeArea, old.other.id);
+  assert.equal(state.catalogs.integracoes.items.length, 146); assert.equal(state.activeArea, old.other.id);
   assert.equal(state.personalFolders.length, 1); assert.equal(state.opaOrigin, "");
   assert.equal(state.introduction, previous.introduction); assert.deepEqual(worker.stored, previous);
 });
@@ -1421,10 +1493,10 @@ test("promotion retains an existing fixed Integration catalog and uses the bundl
   const previous = previousPersonalIntegrations(); previous.stored.catalogs.integracoes = clone(integrationsCatalog);
   previous.stored.lastSyncByArea.integracoes = "2026-10-08T15:00:00Z";
   const worker = workerHarness(previous.stored); await worker.lifecycle("onInstalled");
-  assert.equal(worker.stored.catalogs.integracoes.items.length, 149);
+  assert.equal(worker.stored.catalogs.integracoes.items.length, 146);
   assert.equal(worker.stored.lastSyncByArea.integracoes, "2026-10-08T15:00:00Z");
   const empty = previousPersonalIntegrations([]); const emptyWorker = workerHarness(empty.stored);
-  assert.equal((await emptyWorker.send({ type: "SV_STATE" })).state.catalog.items.length, 149);
+  assert.equal((await emptyWorker.send({ type: "SV_STATE" })).state.catalog.items.length, 146);
   assert.equal(emptyWorker.stored.lastSyncByArea.integracoes, null);
   assert.equal(emptyWorker.stored.personalFolders.length, 1);
 });
@@ -1440,7 +1512,7 @@ test("Integration refresh discovers a new video, excludes the review folder and 
       [{ id: integrationsCatalog.ignoredFolders[0].folderId, name: integrationsCatalog.ignoredFolders[0].name }]);
     await worker.send({ type: "SV_REQUEST_DRIVE" });
     const catalog = await page.window.SpeedVideosView.readCatalogTree(area);
-    assert.equal(catalog.items.length, 150); assert.equal(catalog.ignoredFolders.length, 1);
+    assert.equal(catalog.items.length, 147); assert.equal(catalog.ignoredFolders.length, 1);
     assert.equal(worker.network.length, 1);
     const saved = await worker.send({ type: "SV_SAVE_CATALOG", areaId: area.id, catalog, scanId: catalog.scanId });
     assert.equal(saved.ok, true); assert.equal(worker.stored.catalogs.fiscal, undefined);
@@ -1451,7 +1523,206 @@ test("Integration refresh discovers a new video, excludes the review folder and 
     search.dispatchEvent(new page.window.Event("input")); assert.equal(page.document.querySelectorAll(".sv-card").length, 1);
     page.document.querySelector(".sv-card .sv-primary").click(); await page.settle();
     const inserted = page.requests.findLast((request) => request.type === "SV_INSERT");
-    assert.equal(inserted.text, "Confira:\nAPI | Novo tutorial\n" + newItem.url);
+    assert.equal(inserted.text, "Confira: API | Novo tutorial - " + newItem.url);
     assert.ok(saved.state.favorites.includes(integrationsCatalog.items[0].id));
   } finally { page.close(); }
+});
+
+test("compact and separated calendar dates are removed from titles without removing ordinary numbers", () => {
+  const core = coreContext(), url = "https://drive.google.com/file/d/date-example/view";
+  for (const name of ["20102026 - Tipo documento | Cadastro.mp4", "20/10/2026 - Tipo documento | Cadastro.mp4",
+    "20 / 10 / 2026 - Tipo documento | Cadastro.mp4", "Tipo documento | Cadastro - 20102026.mp4",
+    "Tipo documento | Cadastro (20102026).mp4", "Cópia de 20102026-Tipo documento | Cadastro.mp4"]) {
+    const item = core.itemFromFile(name, url);
+    assert.equal(item.displayTitle, "Tipo de documento | Cadastro", name);
+    assert.equal(item.dateInFilename, "2026-10-20");
+    assert.equal(item.originalFilename, name); assert.equal(item.url, url);
+  }
+  assert.equal(core.itemFromFile("29022024 - Tutorial.mp4", url).dateInFilename, "2024-02-29");
+  for (const name of ["29022025 - Tutorial.mp4", "31022026 - Tutorial.mp4", "20261020 - Tutorial.mp4",
+    "Relatório 201020261.mp4", "NFCom modelo 62 - Porta 8080.mp4", "Código ABC20102026XYZ.mp4"]) {
+    const item = core.itemFromFile(name, url);
+    assert.equal(item.dateInFilename, null, name);
+    assert.equal(item.displayTitle, name.slice(0, -4));
+  }
+  assert.equal(core.itemFromFile("Relatório - 20102026 - Instalações.webm", url).title, "Relatório - Instalações");
+});
+
+test("disposal markers are ignored while deletion tutorials and API DELETE remain searchable", () => {
+  const core = coreContext(), url = "https://drive.google.com/file/d/disposal-example/view";
+  for (const name of ["Deletar", "DELETAR.mp4", "➡ | DELETAR | Integrações | Vídeo", "[APAGAR] Tutorial.webm",
+    "Tutorial - PARA EXCLUIR.mp4", "Remover", "Tutorial | DESCARTAR DEPOIS"]) {
+    assert.equal(core.isIgnoredFile(name), true, name);
+    assert.equal(core.itemFromFile(name, url), null, name);
+  }
+  for (const name of ["Como deletar uma renegociação", "Como deletar uma transferência entre contas.webm",
+    "Excluir Lote.webm", "[Contas a receber] Localizar boleto Deletado.mp4", "API | Explicando o método DELETE"]) {
+    assert.equal(core.isIgnoredFile(name), false, name);
+    assert.ok(core.itemFromFile(name, url), name);
+  }
+  const previous = clone(integrationsCatalog);
+  previous.items.push({ id: "disposal-example", originalFilename: "DELETAR", url });
+  const cleaned = core.validateCatalog(previous, "integracoes");
+  assert.equal(cleaned.items.length, 146); assert.equal(cleaned.itemCount, 146);
+});
+
+test("catalog-file title corrections survive cached data and a complete Drive refresh", async () => {
+  const core = coreContext();
+  const previous = clone(stockCatalog); delete previous.titleOverrides;
+  previous.items = previous.items.map((item) => ({ ...item, displayTitle: core.itemFromFile(item.originalFilename, item.url, "Estoque").displayTitle }));
+  const worker = workerHarness({ catalogs: { estoque: previous }, favorites: [stockCatalog.items[0].id], introduction: "Minha mensagem:" });
+  const page = connectedPage(worker);
+  try {
+    const before = (await worker.send({ type: "SV_STATE" })).state.catalogs.estoque;
+    assert.deepEqual(before.items.map((item) => item.displayTitle), stockCatalog.items.map((item) => item.displayTitle));
+    for (const area of JSON.parse(source("tests/fixtures/drive/index.json"))) for (const folder of area.folders) {
+      worker.setFolderResponse({ ok: true, url: "https://drive.google.com/embeddedfolderview",
+        text: async () => fs.readFileSync(path.join(root, "tests/fixtures/drive", folder.file), "utf8") }, folder.folderId);
+    }
+    await worker.send({ type: "SV_REQUEST_DRIVE" });
+    const refreshed = await page.window.SpeedVideosView.readCatalogTree("estoque");
+    const saved = await worker.send({ type: "SV_SAVE_CATALOG", areaId: "estoque", catalog: refreshed });
+    assert.equal(saved.ok, true);
+    const titles = new Map(saved.state.catalogs.estoque.items.map((item) => [item.id, item.displayTitle]));
+    for (const item of stockCatalog.items) assert.equal(titles.get(item.id), item.displayTitle, item.id);
+    assert.deepEqual(saved.state.favorites, [stockCatalog.items[0].id]);
+    assert.equal(saved.state.introduction, "Minha mensagem:");
+  } finally { page.close(); }
+});
+
+test("user titles take priority over catalog corrections and survive refresh, restart and restoration", async () => {
+  const item = stockCatalog.items.find((item) => item.originalFilename === "2. Tipo de documento (1).mp4");
+  const worker = workerHarness({ activeArea: "estoque", favorites: [item.id], introduction: "Meu texto:" });
+  const custom = "Meu nome 20102026 | Cadastro sem renomear o Drive";
+  const edited = await worker.send({ type: "SV_SET_VIDEO_TITLE", id: item.id, title: custom });
+  assert.equal(edited.ok, true);
+  assert.equal(edited.state.catalog.items.find((entry) => entry.id === item.id).displayTitle, custom);
+  const updated = clone(stockCatalog);
+  updated.items.find((entry) => entry.id === item.id).originalFilename = "20102026 - Tipo documento | Nome novo no Drive.mp4";
+  assert.equal((await worker.send({ type: "SV_SAVE_CATALOG", areaId: "estoque", catalog: updated })).ok, true);
+  const restarted = workerHarness(worker.stored);
+  await restarted.lifecycle("onStartup");
+  const state = (await restarted.send({ type: "SV_STATE" })).state;
+  const video = state.catalog.items.find((entry) => entry.id === item.id);
+  assert.equal(video.displayTitle, custom); assert.equal(video.hasCustomTitle, true);
+  assert.equal(video.originalFilename, "20102026 - Tipo documento | Nome novo no Drive.mp4");
+  assert.equal(video.dateInFilename, "2026-10-20"); assert.equal(video.url, item.url);
+  assert.equal(coreContext().messageFor(video, true, "Confira:"), `Confira: ${custom} - ${item.url}`);
+  assert.equal(coreContext().search(state.catalog.items, "Meu nome 20102026")[0].id, item.id);
+  assert.deepEqual(state.favorites, [item.id]); assert.equal(state.introduction, "Meu texto:");
+  const restored = await restarted.send({ type: "SV_RESET_VIDEO_TITLE", id: item.id });
+  assert.equal(restored.state.catalog.items.find((entry) => entry.id === item.id).displayTitle, "Tipo de documento");
+  assert.equal(Object.hasOwn(restarted.stored.videoTitles, item.id), false);
+  assert.deepEqual(clone((await workerHarness().send({ type: "SV_STATE" })).state.videoTitles), {});
+});
+
+test("personal-folder video titles remain saved through folder refresh", async () => {
+  const worker = workerHarness(), page = connectedPage(worker);
+  try {
+    await addFixtureFolder(worker, page);
+    const id = "personal-video", title = "Meu tutorial temporário";
+    assert.equal((await worker.send({ type: "SV_SET_VIDEO_TITLE", id, title })).ok, true);
+    setPublicPage(worker, "monthly-folder", [personalVideo(id, "20102026 - Assunto | Arquivo novo.webm")]);
+    const folder = (await worker.send({ type: "SV_STATE" })).state.personalFolders[0];
+    const refreshed = await page.window.SpeedVideosView.readCatalogTree(folder);
+    const saved = await worker.send({ type: "SV_SAVE_CATALOG", areaId: folder.id, catalog: refreshed, scanId: refreshed.scanId });
+    assert.equal(saved.ok, true); assert.equal(saved.state.catalog.items[0].displayTitle, title);
+    const restored = await worker.send({ type: "SV_RESET_VIDEO_TITLE", id });
+    assert.equal(restored.state.catalog.items[0].displayTitle, "Assunto | Arquivo novo");
+  } finally { page.close(); }
+});
+
+test("concurrent title edits, favorite changes and a refresh preserve all preferences", async () => {
+  const worker = workerHarness({ introduction: "Meu texto:", opaOrigin: "" });
+  const [first, second] = initialCatalog.items;
+  const results = await Promise.all([
+    worker.send({ type: "SV_SET_VIDEO_TITLE", id: first.id, title: "Primeiro título" }),
+    worker.send({ type: "SV_SAVE_CATALOG", areaId: "fiscal", catalog: withNewVideo(initialCatalog, "fiscal") }),
+    worker.send({ type: "SV_SET_VIDEO_TITLE", id: second.id, title: "Segundo título" }),
+    worker.send({ type: "SV_FAVORITE", id: first.id })
+  ]);
+  assert.ok(results.every((result) => result.ok));
+  const state = (await worker.send({ type: "SV_STATE" })).state;
+  assert.equal(state.catalogs.fiscal.items.length, 77);
+  assert.equal(state.videoTitles[first.id], "Primeiro título"); assert.equal(state.videoTitles[second.id], "Segundo título");
+  assert.deepEqual(state.favorites, [first.id]); assert.equal(state.introduction, "Meu texto:"); assert.equal(state.opaOrigin, "");
+});
+
+test("title edits reject invalid input and calls from the chat page without writing", async () => {
+  const worker = workerHarness(), id = initialCatalog.items[0].id;
+  for (const title of ["", "   ", "a".repeat(501), 12, null]) {
+    assert.equal((await worker.send({ type: "SV_SET_VIDEO_TITLE", id, title })).ok, false);
+  }
+  assert.equal((await worker.send({ type: "SV_SET_VIDEO_TITLE", id: "missing", title: "Nome" })).ok, false);
+  for (const type of ["SV_SET_VIDEO_TITLE", "SV_RESET_VIDEO_TITLE"]) {
+    assert.equal((await worker.send({ type, id, title: "Nome" }, `${origin}/chat`, { tab: { id: 1 }, frameId: 0 })).ok, false);
+  }
+  assert.deepEqual(worker.stored, {}); assert.equal(worker.network.length, 0);
+});
+
+test("options selects a folder and video, edits its title and updates an already-open popup", async () => {
+  const worker = workerHarness({ activeArea: "estoque" });
+  const page = connectedPage(worker, source("options.html")), popup = connectedPage(worker);
+  try {
+    page.run("options.js"); popup.run("popup.js"); await page.settle();
+    const area = page.document.getElementById("video-title-area");
+    assert.equal(area.options.length, 4); area.value = "financeiro"; area.dispatchEvent(new page.window.Event("change"));
+    assert.equal(page.document.getElementById("video-title-video").options.length, 290);
+    area.value = "estoque"; area.dispatchEvent(new page.window.Event("change"));
+    const videoSelect = page.document.getElementById("video-title-video");
+    const item = stockCatalog.items.find((item) => item.originalFilename === "2. Tipo de documento (1).mp4");
+    videoSelect.value = item.id; videoSelect.dispatchEvent(new page.window.Event("change"));
+    const input = page.document.getElementById("video-title-input"); assert.equal(input.value, "Tipo de documento");
+    const title = 'Meu título | <img src="x">'; input.value = title; input.dispatchEvent(new page.window.Event("input"));
+    page.document.getElementById("video-title-form").dispatchEvent(new page.window.Event("submit", { cancelable: true }));
+    await page.settle(); await page.settle();
+    assert.equal(input.value, title); assert.equal(videoSelect.value, item.id);
+    assert.equal(videoSelect.selectedOptions[0].textContent, title);
+    assert.equal(page.document.querySelector("img"), null);
+    assert.match(page.document.getElementById("video-title-status").textContent, /Título salvo/);
+    const search = popup.document.querySelector('input[type="search"]'); search.value = "Meu título";
+    search.dispatchEvent(new popup.window.Event("input"));
+    assert.equal(popup.document.querySelectorAll(".sv-card").length, 1);
+    assert.equal(popup.document.querySelector(".sv-card h3").textContent, title);
+    assert.equal(popup.document.querySelector("img"), null);
+    popup.document.querySelector(".sv-primary").click(); await popup.settle();
+    assert.equal(popup.requests.findLast((request) => request.type === "SV_INSERT").text,
+      `Segue o vídeo com o passo a passo: ${title} - ${item.url}`);
+    page.document.getElementById("reset-video-title").click(); await page.settle(); await page.settle();
+    assert.equal(input.value, "Tipo de documento"); assert.equal(page.document.getElementById("reset-video-title").disabled, true);
+    assert.equal(Object.hasOwn(worker.stored.videoTitles, item.id), false);
+  } finally { page.close(); popup.close(); }
+});
+
+test("options retains an unsaved title draft when other titles change and reports invalid input", async () => {
+  const worker = workerHarness(), page = connectedPage(worker, source("options.html"));
+  try {
+    page.run("options.js"); await page.settle();
+    const select = page.document.getElementById("video-title-video"), id = select.value;
+    const input = page.document.getElementById("video-title-input"); input.value = "Ainda estou editando";
+    input.dispatchEvent(new page.window.Event("input"));
+    const other = initialCatalog.items.find((item) => item.id !== id);
+    await worker.send({ type: "SV_SET_VIDEO_TITLE", id: other.id, title: "Outro título" }); await page.settle();
+    assert.equal(input.value, "Ainda estou editando"); assert.equal(select.value, id);
+    input.value = ""; input.dispatchEvent(new page.window.Event("input"));
+    page.document.getElementById("video-title-form").dispatchEvent(new page.window.Event("submit", { cancelable: true }));
+    await page.settle(); await page.settle();
+    assert.equal(input.value, ""); assert.equal(Object.hasOwn(worker.stored.videoTitles, id), false);
+    assert.match(page.document.getElementById("video-title-status").textContent, /1 a 500/);
+  } finally { page.close(); }
+});
+
+test("options handles a personal folder with no videos without enabling title actions", async () => {
+  const worker = workerHarness(), setup = connectedPage(worker);
+  let page;
+  try {
+    setPublicPage(worker, "empty-edit-folder");
+    await setup.window.SpeedVideosView.addPersonalFolder("https://drive.google.com/drive/folders/empty-edit-folder", "Pasta vazia");
+    page = connectedPage(worker, source("options.html")); page.run("options.js"); await page.settle();
+    assert.equal(page.document.getElementById("video-title-area").value, "personal-empty-edit-folder");
+    for (const id of ["video-title-video", "video-title-input", "save-video-title", "reset-video-title"]) {
+      assert.equal(page.document.getElementById(id).disabled, true, id);
+    }
+    assert.match(page.document.getElementById("video-title-video").textContent, /ainda não tem vídeos/);
+  } finally { setup.close(); page?.close(); }
 });

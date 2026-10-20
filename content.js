@@ -34,27 +34,27 @@
     if (!target) throw new Error("Abra um atendimento com o campo de mensagem disponível.");
     if (expectedEditor && target !== expectedEditor) throw new Error("O atendimento mudou. Abra o menu de vídeos novamente.");
     const existing = target.innerText ?? target.textContent ?? "";
-    const addition = `${existing.trim() ? "\n\n" : ""}${text}`;
+    const message = text.replace(/\s+/g, " ").trim();
+    const addition = `${existing.trim() && !/\s$/.test(existing) ? " " : ""}${message}`;
     target.focus();
     const selection = window.getSelection();
     const range = document.createRange();
     range.selectNodeContents(target); range.collapse(false);
     selection.removeAllRanges(); selection.addRange(range);
 
+    // Insert a single line of plain text, without HTML wrappers or added line breaks.
     // Prefer the browser edit operation so native undo and input handlers participate.
     const before = target.innerHTML;
     let gotInput = false;
     const inputSeen = () => { gotInput = true; };
     target.addEventListener("input", inputSeen);
     try {
-      if (typeof document.execCommand === "function") document.execCommand("insertText", false, addition);
+      if (typeof document.execCommand === "function") {
+        try { document.execCommand("insertText", false, addition); }
+        catch { /* Fall back when native editing is unavailable. */ }
+      }
       if (target.innerHTML === before) {
-        const fragment = document.createDocumentFragment();
-        addition.split("\n").forEach((line, index) => {
-          if (index) fragment.append(document.createElement("br"));
-          if (line) fragment.append(document.createTextNode(line));
-        });
-        range.insertNode(fragment);
+        range.insertNode(document.createTextNode(addition));
         range.selectNodeContents(target); range.collapse(false);
         selection.removeAllRanges(); selection.addRange(range);
       }

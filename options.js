@@ -15,8 +15,62 @@ const messagePreview = document.getElementById("message-preview");
 const messageStatus = document.getElementById("message-status");
 const saveMessageButton = document.getElementById("save-message");
 const resetMessageButton = document.getElementById("reset-message");
+const titleAreaSelect = document.getElementById("video-title-area");
+const titleVideoSelect = document.getElementById("video-title-video");
+const titleInput = document.getElementById("video-title-input");
+const titleOriginal = document.getElementById("video-title-original");
+const titleStatus = document.getElementById("video-title-status");
+const saveTitleButton = document.getElementById("save-video-title");
+const resetTitleButton = document.getElementById("reset-video-title");
+let titleBusy = false;
+let titleDirty = false;
 let currentState;
 function status(node, text, error = false) { node.textContent = text; node.dataset.error = String(error); }
+function renderTitleEditor(resetDraft = false) {
+  if (!currentState) return;
+  const areas = currentState.areas || core.areas;
+  const areaId = titleAreaSelect.value || currentState.activeArea || "fiscal";
+  const selectedId = titleVideoSelect.value;
+  titleAreaSelect.replaceChildren(...areas.map((area) => new Option(area.label, area.id)));
+  titleAreaSelect.value = areas.some((area) => area.id === areaId) ? areaId : "fiscal";
+  const items = [...(currentState.catalogs[titleAreaSelect.value]?.items || [])]
+    .sort((a, b) => (a.displayTitle || a.title).localeCompare(b.displayTitle || b.title, "pt-BR"));
+  titleVideoSelect.replaceChildren(...items.map((item) => new Option(item.displayTitle || item.title, item.id)));
+  if (items.some((item) => item.id === selectedId)) titleVideoSelect.value = selectedId;
+  const item = items.find((item) => item.id === titleVideoSelect.value);
+  if (resetDraft || !titleDirty || selectedId !== titleVideoSelect.value || !item) {
+    titleInput.value = item ? item.displayTitle || item.title : "";
+    titleDirty = false;
+  }
+  if (!items.length) titleVideoSelect.append(new Option("Esta pasta ainda não tem vídeos", ""));
+  titleOriginal.textContent = item ? `Nome original: ${item.originalFilename}` : "";
+  titleAreaSelect.disabled = titleBusy;
+  titleVideoSelect.disabled = titleInput.disabled = saveTitleButton.disabled = titleBusy || !item;
+  resetTitleButton.disabled = titleBusy || !item?.hasCustomTitle;
+}
+async function changeVideoTitle(reset = false) {
+  if (titleBusy || !titleVideoSelect.value) return;
+  const id = titleVideoSelect.value;
+  const title = titleInput.value;
+  titleBusy = true; renderTitleEditor();
+  try {
+    const result = await ui.send({ type: reset ? "SV_RESET_VIDEO_TITLE" : "SV_SET_VIDEO_TITLE", id,
+      ...(reset ? {} : { title }) });
+    titleDirty = false;
+    catalogInfo(result.state); renderTitleEditor(true);
+    status(titleStatus, reset ? "Título padrão restaurado." : "Título salvo. Ele será mantido nas próximas atualizações.");
+  } catch (error) { status(titleStatus, error.message, true); }
+  finally { titleBusy = false; renderTitleEditor(); }
+}
+titleAreaSelect.addEventListener("change", () => {
+  titleVideoSelect.value = ""; renderTitleEditor(true); status(titleStatus, "");
+});
+titleVideoSelect.addEventListener("change", () => { renderTitleEditor(true); status(titleStatus, ""); });
+titleInput.addEventListener("input", () => { titleDirty = true; });
+document.getElementById("video-title-form").addEventListener("submit", (event) => {
+  event.preventDefault(); changeVideoTitle();
+});
+resetTitleButton.addEventListener("click", () => changeVideoTitle(true));
 function previewMessage() {
   if (!currentState) return;
   const item = currentState.catalogs[areaSelect.value]?.items[0];
@@ -37,7 +91,7 @@ function catalogInfo(state) {
   if (catalog.folders) info.textContent += ` ${catalog.folders.length} pasta${catalog.folders.length === 1 ? "" : "s"} consultada${catalog.folders.length === 1 ? "" : "s"}.`;
   if (catalog.ignoredFolders?.length) info.textContent += ` ${catalog.ignoredFolders.length} pasta${catalog.ignoredFolders.length === 1 ? "" : "s"} ignorada${catalog.ignoredFolders.length === 1 ? "" : "s"}.`;
   if (lastSync) info.textContent += ` Última atualização: ${new Date(lastSync).toLocaleString("pt-BR")}.`;
-  previewMessage();
+  previewMessage(); renderTitleEditor();
 }
 introductionInput.addEventListener("input", previewMessage);
 document.getElementById("message-form").addEventListener("submit", async (event) => {
@@ -94,6 +148,6 @@ ui.send({ type: "SV_STATE" }).then(({ state }) => {
   catalogInfo(state);
 }).catch((error) => { status(opaStatus, error.message, true); });
 chrome.storage.onChanged.addListener((values, area) => {
-  if (area !== "local" || !(values.personalFolders || values.catalogs || values.lastSyncByArea)) return;
+  if (area !== "local" || !(values.personalFolders || values.catalogs || values.lastSyncByArea || values.videoTitles)) return;
   ui.send({ type: "SV_STATE" }).then(({ state }) => catalogInfo(state)).catch((error) => status(updateStatus, error.message, true));
 });

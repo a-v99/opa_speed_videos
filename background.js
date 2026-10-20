@@ -14,8 +14,23 @@ function serial(action) {
 }
 function bundledCatalog(area) {
   if (!bundledCatalogs.has(area.id)) bundledCatalogs.set(area.id, fetch(chrome.runtime.getURL(area.bundledFile))
-    .then((response) => response.json()).then((raw) => core.validateCatalog(raw, area.id)));
+    .then((response) => response.json()).then((raw) => {
+      const generated = core.validateCatalog(raw, area.id);
+      const originals = new Map(raw.items.map((item) => [item.id, item]));
+      const titleOverrides = { ...raw.titleOverrides };
+      for (const item of generated.items) {
+        const title = originals.get(item.id).displayTitle;
+        if (typeof title === "string" && title.trim() && title !== item.displayTitle) titleOverrides[item.id] = title;
+      }
+      if (!Object.keys(titleOverrides).length) return generated;
+      return core.validateCatalog({ ...generated, titleOverrides }, area.id);
+    }));
   return bundledCatalogs.get(area.id);
+}
+async function validatedCatalog(raw, area) {
+  if (area.personal) return core.validateCatalog(raw, area);
+  const bundled = await bundledCatalog(area);
+  return core.validateCatalog({ ...(raw || bundled), titleOverrides: bundled.titleOverrides }, area);
 }
 function isLegacyFinance(catalog) {
   return catalog?.source?.folderId === core.legacyFinanceFolderId;
@@ -64,16 +79,18 @@ async function migrateBundledPersonalFolders() {
   personalFoldersMigrated = true;
 }
 async function getState() {
-  const stored = await chrome.storage.local.get(["catalog", "catalogs", "favorites", "opaOrigin", "lastSync", "lastSyncByArea", "activeArea", "introduction", "personalFolders"]);
+  const stored = await chrome.storage.local.get(["catalog", "catalogs", "favorites", "opaOrigin", "lastSync", "lastSyncByArea", "activeArea", "introduction", "personalFolders", "videoTitles"]);
   const personalFolders = core.validatePersonalFolders(stored.personalFolders);
   const areas = [...core.areas, ...personalFolders];
   const catalogs = Object.fromEntries(await Promise.all(core.areas.map(async (area) => {
     // Version 0.1 stored its fiscal catalog under "catalog". Keep that data on update.
     const local = stored.catalogs?.[area.id] || (area.id === "fiscal" && stored.catalog);
-    if (local && !(area.id === "financeiro" && isLegacyFinance(local))) return [area.id, core.validateCatalog(local, area.id)];
+    if (local && !(area.id === "financeiro" && isLegacyFinance(local))) return [area.id, await validatedCatalog(local, area)];
     return [area.id, await bundledCatalog(area)];
   })));
   for (const folder of personalFolders) catalogs[folder.id] = core.validateCatalog(stored.catalogs?.[folder.id], folder);
+  const videoTitles = core.validateVideoTitles(stored.videoTitles);
+  for (const area of areas) catalogs[area.id] = core.catalogWithVideoTitles(catalogs[area.id], videoTitles);
   const activeArea = areas.some((area) => area.id === stored.activeArea) ? stored.activeArea : "fiscal";
   const lastSyncByArea = { fiscal: stored.lastSync || null, ...stored.lastSyncByArea };
   if (isLegacyFinance(stored.catalogs?.financeiro)) lastSyncByArea.financeiro = null;
@@ -81,6 +98,7 @@ async function getState() {
   return { catalog: catalogs[activeArea], catalogs, areas, personalFolders, activeArea, favorites: stored.favorites || [],
     opaOrigin: stored.opaOrigin === "" ? "" : core.opaOrigin,
     introduction: typeof stored.introduction === "string" ? core.validateIntroduction(stored.introduction) : core.defaultIntroduction,
+    videoTitles,
     lastSync: lastSyncByArea[activeArea] || null, lastSyncByArea, css: await styleText };
 }
 async function configuredArea(id) {
@@ -145,6 +163,18 @@ async function dispatch(message) {
       const introduction = core.validateIntroduction(message.introduction);
       await chrome.storage.local.set({ introduction });
       return { ok: true, introduction };
+    });
+    case "SV_SET_VIDEO_TITLE":
+    case "SV_RESET_VIDEO_TITLE": return serial(async () => {
+      const state = await getState();
+      if (!Object.values(state.catalogs).some((catalog) => catalog.items.some((item) => item.id === message.id))) {
+        throw new Error("Este vídeo não está mais no catálogo. Atualize a lista e tente novamente.");
+      }
+      const videoTitles = { ...state.videoTitles };
+      if (message.type === "SV_RESET_VIDEO_TITLE") delete videoTitles[message.id];
+      else videoTitles[message.id] = core.validateVideoTitle(message.title);
+      await chrome.storage.local.set({ videoTitles: core.validateVideoTitles(videoTitles) });
+      return { ok: true, state: await getState() };
     });
     case "SV_SET_ORIGIN": return serial(async () => {
       const origin = message.origin ? core.normalizeOpaUrl(message.origin) : "";
@@ -214,8 +244,8 @@ async function dispatch(message) {
       const area = await configuredArea(message.areaId);
       if (area.personal) assertPersonalScan(area, message.scanId);
       const { scanId: unused, ...raw } = message.catalog;
-      const catalog = core.validateCatalog(raw, area);
       const stored = await chrome.storage.local.get(["catalogs", "lastSyncByArea"]);
+      const catalog = await validatedCatalog(raw, area);
       await chrome.storage.local.set({ catalogs: { ...stored.catalogs, [area.id]: catalog },
         lastSyncByArea: { ...stored.lastSyncByArea, [area.id]: new Date().toISOString() } });
       return { ok: true, state: await getState() };
@@ -269,7 +299,7 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
     }
     return true;
   }
-  if (["SV_SET_ORIGIN", "SV_SET_MESSAGE"].includes(message.type) && !extensionPage) {
+  if (["SV_SET_ORIGIN", "SV_SET_MESSAGE", "SV_SET_VIDEO_TITLE", "SV_RESET_VIDEO_TITLE"].includes(message.type) && !extensionPage) {
     respond({ ok: false, error: "Abra as opções da extensão para realizar essa ação." }); return false;
   }
   (async () => {

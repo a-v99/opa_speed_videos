@@ -23,12 +23,27 @@
       <form id="message-form">
         <label for="message-introduction">Sua mensagem</label>
         <textarea id="message-introduction" rows="4" maxlength="2000" placeholder="Segue o vídeo com o passo a passo:"></textarea>
-        <p class="note">A mensagem vale para todos os setores e fica salva neste navegador. O assunto, o nome e o link são acrescentados abaixo. Deixe vazio para inserir apenas o título e o link.</p>
+        <p class="note">A mensagem vale para todos os setores e fica salva neste navegador. Formato: sua mensagem: Assunto | Nome do vídeo - link, em uma única linha. Deixe vazio para inserir apenas o título e o link.</p>
         <p class="preview-label">Prévia</p>
         <pre id="message-preview" aria-label="Prévia da mensagem"></pre>
         <div class="actions"><button id="save-message" type="submit">Salvar mensagem</button><button id="reset-message" class="secondary" type="button">Restaurar padrão</button></div>
       </form>
       <p id="message-status" role="status"></p>
+    </section>
+    <section aria-labelledby="video-title-heading">
+      <h2 id="video-title-heading">Ajustar vídeo</h2>
+      <form id="video-title-form">
+        <label for="video-title-area">Pasta</label>
+        <select id="video-title-area"></select>
+        <label for="video-title-video">Vídeo</label>
+        <select id="video-title-video"></select>
+        <label for="video-title-input">Título exibido</label>
+        <input id="video-title-input" type="text" maxlength="500" required aria-describedby="video-title-note">
+        <p id="video-title-note" class="note">O nome escolhido será usado na lista e ao inserir o vídeo, mesmo depois de atualizar. Vale apenas neste navegador e não altera o arquivo no Drive.</p>
+        <p id="video-title-original" class="note"></p>
+        <div class="actions"><button id="save-video-title" type="submit">Salvar título</button><button id="reset-video-title" class="secondary" type="button">Restaurar padrão</button></div>
+      </form>
+      <p id="video-title-status" role="status"></p>
     </section>
     <section aria-labelledby="catalog-heading">
       <h2 id="catalog-heading">Catálogo de vídeos</h2>
@@ -46,7 +61,7 @@
       <ol><li>Abra um atendimento e clique em <strong>Vídeos</strong>.</li><li>Escolha um setor ou pasta pessoal no seletor <strong>Catálogo</strong>.</li><li>Pesquise por uma ou mais palavras e escolha <strong>Inserir no chat</strong>.</li><li>Revise a mensagem e envie pelo Opa! quando estiver pronta.</li></ol>
       <p class="note">Você também pode abrir o catálogo pelo ícone da extensão, copiar o link ou abrir o vídeo.</p>
     </section>
-    <footer>Versão 0.8.3 — <a id="repository-link" href="https://github.com/a-v99/opa_speed_videos" target="_blank" rel="noopener noreferrer">GitHub</a></footer>
+    <footer>Versão 0.8.6 — <a id="repository-link" href="https://github.com/a-v99/opa_speed_videos" target="_blank" rel="noopener noreferrer">GitHub</a></footer>
   </main>
   <script src="core.js"></script>
   <script src="view.js"></script>
